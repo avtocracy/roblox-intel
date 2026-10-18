@@ -1,0 +1,29 @@
+{
+"date":"2026-10-18",
+"generated_at":"2026-10-18T19:16:03+00:00",
+"requests":{
+"about.roblox.com":{"cache_hits":0,"errors":0,"last_error":"","requests":5,"retries":0},
+"apis.roblox.com":{"cache_hits":0,"errors":0,"last_error":"","requests":32,"retries":0},
+"devforum.roblox.com":{"cache_hits":0,"errors":0,"last_error":"","requests":23,"retries":0},
+"discord.com":{"cache_hits":0,"errors":0,"last_error":"","requests":1,"retries":0},
+"en.help.roblox.com":{"cache_hits":0,"errors":0,"last_error":"","requests":1,"retries":0},
+"games.roblox.com":{"cache_hits":0,"errors":0,"last_error":"","requests":96,"retries":4},
+"models.github.ai":{"cache_hits":0,"errors":0,"last_error":"","requests":25,"retries":0},
+"thumbnails.roblox.com":{"cache_hits":0,"errors":0,"last_error":"","requests":3,"retries":0}
+},
+"sources":[
+{"detail":"26 developers from 26 entries","fallback":"","id":"developers-config","label":"Tracked developer list (config/developers.yml)","status":"ok"},
+{"detail":"90 games across 26 developers","fallback":"","id":"developer-games","label":"Developer game lists (games.roblox.com v2)","status":"ok"},
+{"detail":"26 sorts, 902 games","fallback":"","id":"charts","label":"Roblox Charts (explore-api)","status":"ok"},
+{"detail":"965 of 965 games","fallback":"","id":"games-api","label":"Game stats (games.roblox.com)","status":"ok"},
+{"detail":"965 games","fallback":"","id":"votes-api","label":"Likes/dislikes (games.roblox.com)","status":"ok"},
+{"detail":"150 new icons","fallback":"","id":"icons-api","label":"Game icons (thumbnails.roblox.com)","status":"ok"},
+{"detail":"16 new","fallback":"","id":"platform:devforum-announcements","label":"DevForum · Announcements","status":"ok"},
+{"detail":"2 new","fallback":"","id":"platform:devforum-release-notes","label":"DevForum · Release Notes","status":"ok"},
+{"detail":"330 articles linked from the newsroom page; 3 new","fallback":"","id":"platform:roblox-newsroom","label":"Roblox Newsroom (official blog)","status":"ok"},
+{"detail":"12 new commits, 7 meaningful changes, 2 formatting-only edits ignored; 7 new","fallback":"","id":"platform:creator-docs","label":"Creator Docs (official docs repo)","status":"ok"},
+{"detail":"help center API; baseline saved (2278 chars); 0 new","fallback":"","id":"platform:devex-faq","label":"DevEx FAQ (Help Center)","status":"ok"},
+{"detail":"keyword summarizer used: AI summaries unavailable","fallback":"","id":"summarizer","label":"Summaries","status":"warn"},
+{"detail":"daily message sent","fallback":"","id":"discord","label":"Discord webhook","status":"ok"}
+]
+}
