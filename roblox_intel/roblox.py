@@ -125,14 +125,18 @@ class Roblox:
         params = {"sessionId": self.session_id, "device": device, "country": country,
                   **(extra_params or {})}
         sorts: list[ChartSort] = []
+        seen: set[str] = set()
         token = None
         for _ in range(10):  # the sort list itself is paginated
             data = self.http.get_json(f"{base}/get-sorts", params={**params, "sortsPageToken": token})
+            added = 0
             for raw in data.get("sorts") or []:
                 sort_id = raw.get("sortId") or raw.get("topicId") or raw.get("id")
                 items = _game_items(raw)
-                if not sort_id or not items:
-                    continue  # filter bars, banners, etc.
+                if not sort_id or not items or str(sort_id) in seen:
+                    continue  # filter bars, banners, repeats
+                seen.add(str(sort_id))
+                added += 1
                 name = (raw.get("sortDisplayName") or raw.get("topic") or raw.get("title")
                         or raw.get("name") or str(sort_id))
                 sort = ChartSort(str(sort_id), str(name))
@@ -149,8 +153,8 @@ class Roblox:
                 if len(sorts) >= max_sorts:
                     return sorts
             token = data.get("nextSortsPageToken")
-            if not token:
-                break
+            if not token or not added:
+                break  # done, or the API ignored the page token
         return sorts
 
     @staticmethod

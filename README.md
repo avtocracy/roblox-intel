@@ -176,7 +176,7 @@ diffs. That catches quiet changes that never get a blog post.
 
 ### Rate limits and etiquette
 
-A daily run makes roughly 100–250 requests. Every request goes through one client that:
+A daily run makes roughly 100–300 requests (the first run a few more). Every request goes through one client that:
 
 * waits at least 1 second between requests to the same host (2s for the DevForum and Newsroom);
 * retries 429/5xx and network errors up to 5 times with exponential backoff and jitter, honouring

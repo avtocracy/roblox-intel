@@ -67,3 +67,10 @@ def test_parse_rss_and_atom():
       <updated>2026-10-01T10:00:00Z</updated><summary>Hello</summary></entry></feed>"""
     entry = parse_feed(atom)[0]
     assert entry["link"] == "https://example.test/post" and entry["published"].startswith("2026-10-01")
+
+
+def test_chart_sorts_stop_when_page_token_is_ignored():
+    page = {"sorts": [{"sortId": "a", "games": [{"universeId": 1}]}], "nextSortsPageToken": "again"}
+    http = FakeHttp({"get-sorts": page})
+    sorts = Roblox(http, {"apis": "https://apis.example"}).chart_sorts(max_pages=1)
+    assert [s.sort_id for s in sorts] == ["a"] and len(http.calls) == 2
