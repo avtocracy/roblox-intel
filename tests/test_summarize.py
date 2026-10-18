@@ -40,13 +40,15 @@ class StubHttp:
         self.catalog = catalog  # None -> catalog unreachable (404)
         self.min_interval = {}
         self.payloads = []
+        self.urls = []
 
     def get_json(self, url, params=None, ttl=None, headers=None):
         if self.catalog is None:
             raise HttpError(url, 404, "HTTP 404")
         return self.catalog
 
-    def post_json(self, url, payload, headers=None, retry_statuses=None, label=None):
+    def post_json(self, url, payload, headers=None, retry_statuses=None, label=None, allow_redirects=True):
+        self.urls.append(url)
         self.payloads.append(payload)
         item = self.responses.pop(0)
         if isinstance(item, Exception):
@@ -55,6 +57,8 @@ class StubHttp:
 
 
 class Resp:
+    status_code, headers, text = 200, {"Content-Type": "application/json"}, ""
+
     def __init__(self, content):
         self._content = content
 
@@ -98,6 +102,8 @@ def test_permission_errors_and_missing_token():
 
 def reply(content, finish="stop"):
     class R:
+        status_code, headers, text = 200, {"Content-Type": "application/json"}, ""
+
         def json(self):
             return {"choices": [{"finish_reason": finish, "message": {"content": content}}]}
     return R()
@@ -145,3 +151,44 @@ def test_prose_reply_still_counts_and_unusable_replies_are_diagnosed():
         assert s.summarize("Post", "x", "src")["method"] == "keywords"
     assert "stopped after 3 unusable replies" in s.disabled_reason and "finish_reason='stop'" in s.problem
     assert s.summarize("Post", "x", "src")["method"] == "keywords" and len(http.payloads) == 4
+
+
+def test_non_json_reply_is_diagnosed_with_http_details():
+    class Plain:
+        status_code, headers, text = 302, {"Content-Type": "text/plain", "Location": "https://elsewhere.test/x"}, "OK\r\n"
+
+        def json(self):
+            raise ValueError("not json")
+
+    http = StubHttp([Plain()] * 3)
+    s = Summarizer(settings(models=["m"]), http, token="t")
+    for _ in range(3):
+        assert s.summarize("Post", "x", "src")["method"] == "keywords"
+    assert "raw='OK\\r\\n'" in s.problem and "HTTP 302" in s.problem and "elsewhere.test" in s.problem
+    assert s.catalog_note.startswith("model catalog unusable")
+
+
+def test_redirects_are_followed_with_post_on_github_hosts_only():
+    class Moved:
+        status_code, text = 308, ""
+
+        def __init__(self, location):
+            self.headers = {"Location": location, "Content-Type": "text/plain"}
+
+        def json(self):
+            raise ValueError
+
+    http = StubHttp([Moved("/inference/v2/chat/completions"), reply(GOOD)])
+    s = Summarizer(settings(models=["m"], endpoint="https://models.github.ai/inference/chat/completions"),
+                   http, token="t")
+    assert s.summarize("Payouts", "x", "src")["method"] == "github-models:m"
+    assert s.endpoint == "https://models.github.ai/inference/v2/chat/completions"
+    assert http.urls[-1] == s.endpoint and len(http.payloads) == 2 and s.calls_left == 24
+
+    evil = StubHttp([Moved("https://attacker.example/steal")] * 3)
+    s = Summarizer(settings(models=["m"], endpoint="https://models.github.ai/inference/chat/completions"),
+                   evil, token="t")
+    for _ in range(3):
+        s.summarize("Post", "x", "src")
+    assert all(u.startswith("https://models.github.ai/") for u in evil.urls), "token never sent off GitHub"
+    assert "attacker.example" in s.problem

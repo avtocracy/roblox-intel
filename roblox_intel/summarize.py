@@ -13,6 +13,7 @@ import json
 import os
 import re
 from typing import Any
+from urllib.parse import urljoin, urlsplit
 
 from .http import HttpClient, HttpError
 from .util import truncate
@@ -201,6 +202,7 @@ class Summarizer:
         self.stats = {"llm": 0, "heuristic": 0}
         self.disabled_reason = ""
         self.problem = ""          # last unusable reply, shown in the run's source health
+        self.catalog_note = ""     # why the model catalog couldn't be used, if it couldn't
         self.bad_replies = 0
         self._catalog_checked = False
         self._params: dict[str, dict[str, Any]] = {}  # per-model request options, adapted on 400s
@@ -241,7 +243,7 @@ class Summarizer:
     # ---- GitHub Models ------------------------------------------------------------
 
     def _headers(self) -> dict[str, str]:
-        return {"Authorization": f"Bearer {self.token}", "Accept": "application/json",
+        return {"Authorization": f"Bearer {self.token}", "Accept": "application/vnd.github+json",
                 "X-GitHub-Api-Version": "2022-11-28"}
 
     def _resolve_models(self) -> None:
@@ -256,6 +258,7 @@ class Summarizer:
             if exc.status in (401, 403):
                 raise LLMUnavailable("GitHub Models refused the token (workflow needs "
                                      "`permissions: models: read`)") from exc
+            self.catalog_note = f"model catalog unusable ({exc.reason[:80]})"
             return  # catalog unreachable: try the configured list as is
         rows = catalog if isinstance(catalog, list) else (catalog.get("models") or catalog.get("data") or [])
         offered = {str(m["id"]).lower(): m for m in rows if isinstance(m, dict) and m.get("id")}
@@ -278,13 +281,16 @@ class Summarizer:
         response_format), drop or rename it and retry once per option."""
         params = self._params.setdefault(model, {"temperature": 0.2, "max_tokens": self.max_tokens,
                                                  "response_format": {"type": "json_object"}})
-        for _ in range(4):
+        redirects = 0
+        for _ in range(6):
             if self.calls_left <= 0:
                 raise LLMUnavailable("per-run AI call budget used up")
             self.calls_left -= 1
             try:
+                # no silent redirects: a redirected POST turns into a GET and returns the wrong thing
                 resp = self.http.post_json(self.endpoint, {"model": model, "messages": messages, **params},
-                                           headers=self._headers(), retry_statuses={500, 502, 503, 504})
+                                           headers=self._headers(), retry_statuses={500, 502, 503, 504},
+                                           allow_redirects=False)
             except HttpError as exc:
                 msg = str(exc).lower()
                 if exc.status in (400, 422):
@@ -298,11 +304,24 @@ class Summarizer:
                         params["max_completion_tokens"] = params.pop("max_tokens")
                         continue
                 raise
+            location = resp.headers.get("Location")
+            if 300 <= resp.status_code < 400 and location and redirects < 2:
+                target = urljoin(self.endpoint, location)
+                host = urlsplit(target).hostname or ""
+                trusted = host == urlsplit(self.endpoint).hostname or host.endswith((".github.ai", ".github.com"))
+                if urlsplit(target).scheme == "https" and trusted:
+                    redirects += 1
+                    self.calls_left += 1  # a redirect isn't a model call
+                    self.endpoint = target  # POST again (keeping the method) and remember it for this run
+                    continue
+            http = f"HTTP {resp.status_code}, content-type {resp.headers.get('Content-Type')!r}"
+            if 300 <= resp.status_code < 400:
+                http += f", redirect to {location!r}"
             try:
                 body = resp.json()
             except ValueError:
-                body = {"_raw": resp.text[:200]}
-            return body if isinstance(body, dict) else {"_raw": str(body)[:200]}
+                return {"_raw": resp.text[:200], "_http": http}
+            return body if isinstance(body, dict) else {"_raw": str(body)[:200], "_http": http}
         raise LLMUnavailable(f"{model} rejected every request variant")
 
     def _llm(self, title: str, text: str, source: str, kind: str) -> dict[str, Any] | None:
@@ -382,8 +401,8 @@ class Summarizer:
         finish = (choices[0] or {}).get("finish_reason") if isinstance(choices[0], dict) else None
         detail = (f"finish_reason={finish!r}, served by {body.get('model') or model!r}, "
                   f"content={content[:80]!r}")
-        if body.get("_raw"):
-            detail += f", raw={body['_raw'][:80]!r}"
+        if "_raw" in body:
+            detail += f", raw={body['_raw'][:80]!r}, {body.get('_http', '')}"
         usage = body.get("usage") or {}
         if usage:
             detail += f", tokens out={usage.get('completion_tokens')}"

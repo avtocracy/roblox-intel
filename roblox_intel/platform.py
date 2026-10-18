@@ -578,7 +578,7 @@ def run(ctx: Context, summarizer: Summarizer | None = None) -> list[dict]:
     store.save_platform_items(log + new_records)
     store.save_state("platform", state)
     stats = summarizer.stats
-    note = summarizer.disabled_reason or summarizer.problem
+    note = "; ".join(x for x in (summarizer.disabled_reason or summarizer.problem, summarizer.catalog_note) if x)
     if stats["llm"]:
         ctx.health.ok("summarizer", "Summaries (GitHub Models, free tier)",
                       f"{stats['llm']} AI summaries ({upgraded} upgraded from earlier keyword summaries), "
