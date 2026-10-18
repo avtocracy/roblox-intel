@@ -1,13 +1,13 @@
 {
 "date":"2026-10-18",
-"generated_at":"2026-10-18T19:28:44+00:00",
+"generated_at":"2026-10-18T19:32:13+00:00",
 "requests":{
 "about.roblox.com":{"cache_hits":1,"errors":0,"last_error":"","requests":0,"retries":0},
 "apis.roblox.com":{"cache_hits":0,"errors":0,"last_error":"","requests":6,"retries":0},
 "devforum.roblox.com":{"cache_hits":5,"errors":0,"last_error":"","requests":0,"retries":0},
 "en.help.roblox.com":{"cache_hits":1,"errors":0,"last_error":"","requests":0,"retries":0},
 "games.roblox.com":{"cache_hits":66,"errors":0,"last_error":"","requests":0,"retries":0},
-"models.github.ai":{"cache_hits":0,"errors":0,"last_error":"","requests":4,"retries":0},
+"models.github.ai":{"cache_hits":1,"errors":0,"last_error":"","requests":3,"retries":0},
 "thumbnails.roblox.com":{"cache_hits":0,"errors":0,"last_error":"","requests":3,"retries":0}
 },
 "sources":[
@@ -22,6 +22,6 @@
 {"detail":"330 articles linked from the newsroom page; 0 new","fallback":"","id":"platform:roblox-newsroom","label":"Roblox Newsroom (official blog)","status":"ok"},
 {"detail":"0 new commits, 0 meaningful changes; 0 new","fallback":"","id":"platform:creator-docs","label":"Creator Docs (official docs repo)","status":"ok"},
 {"detail":"help center API; unchanged; 0 new","fallback":"","id":"platform:devex-faq","label":"DevEx FAQ (Help Center)","status":"ok"},
-{"detail":"keyword summarizer used: stopped after 3 unusable replies; last: openai/gpt-4.1-mini replied without a usable summary (finish_reason=None, served by 'openai/gpt-4.1-mini', content='', raw='OK\\r\\n')","fallback":"","id":"summarizer","label":"Summaries","status":"warn"}
+{"detail":"keyword summarizer used: stopped after 3 unusable replies; last: openai/gpt-4.1-mini replied without a usable summary (finish_reason=None, served by 'openai/gpt-4.1-mini', content='', raw='OK\\r\\n', HTTP 200, content-type 'text/plain'); model catalog unusable (invalid JSON: Expecting value: line 1 column 1 (char 0))","fallback":"","id":"summarizer","label":"Summaries","status":"warn"}
 ]
 }
