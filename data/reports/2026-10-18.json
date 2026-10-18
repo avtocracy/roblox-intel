@@ -3,7 +3,7 @@
 "date":"2026-10-18",
 "developer_moves":[],
 "developer_moves_total":0,
-"generated_at":"2026-10-18T19:32:13+00:00",
+"generated_at":"2026-10-18T19:39:30+00:00",
 "health":[
 {"detail":"26 developers from 26 entries","fallback":"","id":"developers-config","label":"Tracked developer list (config/developers.yml)","status":"ok"},
 {"detail":"90 games across 26 developers","fallback":"","id":"developer-games","label":"Developer game lists (games.roblox.com v2)","status":"ok"},
@@ -16,7 +16,7 @@
 {"detail":"330 articles linked from the newsroom page; 0 new","fallback":"","id":"platform:roblox-newsroom","label":"Roblox Newsroom (official blog)","status":"ok"},
 {"detail":"0 new commits, 0 meaningful changes; 0 new","fallback":"","id":"platform:creator-docs","label":"Creator Docs (official docs repo)","status":"ok"},
 {"detail":"help center API; unchanged; 0 new","fallback":"","id":"platform:devex-faq","label":"DevEx FAQ (Help Center)","status":"ok"},
-{"detail":"keyword summarizer used: stopped after 3 unusable replies; last: openai/gpt-4.1-mini replied without a usable summary (finish_reason=None, served by 'openai/gpt-4.1-mini', content='', raw='OK\\r\\n', HTTP 200, content-type 'text/plain'); model catalog unusable (invalid JSON: Expecting value: line 1 column 1 (char 0))","fallback":"","id":"summarizer","label":"Summaries","status":"warn"}
+{"detail":"21 AI summaries (21 upgraded from earlier keyword summaries), 0 keyword summaries","fallback":"","id":"summarizer","label":"Summaries (local AI on the runner (qwen2.5:3b))","status":"ok"}
 ],
 "highlights":[
 {"kind":"breakout","priority":94,"text":"New breakout: [**Break and Steal an Egg**](https://www.roblox.com/games/114326934417838) (Simulation, 43 days old) · 89.8k playing, ~4.1M visits/day","universe_id":10765288803},
