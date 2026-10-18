@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "17 14 * * *"   # every day at 14:17 UTC; edit to taste (cron is always UTC)
   workflow_dispatch:         # "Run workflow" button for manual runs
+    inputs:
+      discord:
+        description: "Send the Discord brief"
+        type: boolean
+        default: true
 
 permissions:
   contents: write    # commit the day's data/ to the repo
@@ -17,7 +22,7 @@ concurrency:
 
 jobs:
   collect:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     outputs:
       site: ${{ steps.site.outputs.uploaded }}
@@ -46,7 +51,7 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Collect, analyze, send Discord brief, build dashboard
-        run: python -m roblox_intel run
+        run: python -m roblox_intel run ${{ github.event_name == 'workflow_dispatch' && !inputs.discord && '--no-discord' || '' }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
@@ -79,7 +84,7 @@ jobs:
   deploy:
     needs: collect
     if: ${{ !cancelled() && needs.collect.outputs.site == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

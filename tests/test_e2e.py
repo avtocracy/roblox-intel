@@ -73,6 +73,7 @@ def env(tmp_path, monkeypatch):
             ]},
             "summarizer": {"provider": "github", "github_models": {
                 "endpoint": f"{base}/models/inference/chat/completions",
+                "catalog": f"{base}/models/catalog/models",
                 "models": ["openai/missing-model", "openai/gpt-4.1-mini"], "max_calls_per_run": 25,
                 "min_interval_seconds": 0}},
             "dashboard": {"output_dir": str(tmp_path / "site"), "top_games": 20, "history_days": 180},
@@ -143,7 +144,8 @@ def test_ten_days_end_to_end(env):
     assert not [p for p in platform.values() if p["source"] == "devex-faq"], "first run only saves a baseline"
     assert platform["devforum-announcements:9001"]["importance"] == "high"
     assert platform["devforum-announcements:9001"]["method"] == "github-models:openai/gpt-4.1-mini", \
-        "unknown model skipped, next model used"
+        "a model missing from GitHub's catalog is skipped"
+    assert not any("text" in p for p in platform.values()), "raw text is only kept for keyword summaries"
     assert len(sc.discord_payloads) == 1
     first = sc.discord_payloads[0]
     assert first["allowed_mentions"] == {"parse": []}
@@ -243,3 +245,33 @@ def test_ten_days_end_to_end(env):
     for f in ("index.html", "app.js", "style.css"):
         assert (site / f).exists()
     assert sc.llm_calls > 0
+
+
+def test_ai_outage_then_upgrade(env):
+    """Day 0: every AI reply is unusable -> keyword summaries + a clear diagnosis.
+    Day 1: AI works again -> day 0's keyword summaries are upgraded in place."""
+    mock, data = env["mock"], env["data"]
+    sc = mock.scenario
+    sc.llm_mode = "empty"
+    assert run_day(env, 0) == 0
+    health = {h["id"]: h for h in load(data / "health.json")["sources"]}
+    assert health["summarizer"]["status"] == "warn"
+    assert "stopped after 3 unusable replies" in health["summarizer"]["detail"]
+    assert "finish_reason='stop'" in health["summarizer"]["detail"] and "mock-reasoner" in health["summarizer"]["detail"]
+    items = load(data / "platform.json")
+    assert items and all(i["method"] == "keywords" for i in items)
+    calls_day0 = sc.llm_calls
+    assert calls_day0 == 3, "stops calling after 3 unusable replies instead of burning the quota"
+    assert any(i.get("text") for i in items if i["source"] == "creator-docs"), "docs text kept for a later upgrade"
+
+    sc.llm_mode = "json"
+    assert run_day(env, 1) == 0
+    items = {i["id"]: i for i in load(data / "platform.json")}
+    for item_id in ("devforum-announcements:9001", "devforum-release-notes:9101",
+                    "roblox-newsroom:creator-earnings-update"):
+        assert items[item_id]["method"].startswith("github-models"), f"{item_id} re-fetched and upgraded"
+    docs = [i for i in items.values() if i["source"] == "creator-docs"]
+    assert docs and all(i["method"].startswith("github-models") for i in docs), "stored text upgraded"
+    assert not any("text" in i for i in items.values()), "text dropped once upgraded"
+    health = {h["id"]: h for h in load(data / "health.json")["sources"]}
+    assert health["summarizer"]["status"] == "ok" and "upgraded" in health["summarizer"]["detail"]

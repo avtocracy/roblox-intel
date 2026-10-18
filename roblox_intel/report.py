@@ -84,9 +84,10 @@ def trend_highlights(analysis: dict, limit: int = 5) -> list[dict]:
 
     if not any(w.get("available") for w in windows.values()):
         # day one: lean on Roblox's own charts until we have history
+        main_charts = {"up-and-coming": 66, "top-trending": 64}  # not the per-genre/niche sorts
         for sort in analysis.get("chart_leaders", []):
-            name = sort["name"].lower()
-            prio = 66 if "up" in name and "coming" in name else 64 if "trending" in name else None
+            prio = (main_charts.get(str(sort.get("sort_id", "")).lower())
+                    or main_charts.get(sort["name"].lower().replace(" ", "-")))
             if prio and sort["games"]:
                 g = sort["games"][0]
                 add(prio, "chart_leader", f"#1 on {md(sort['name'])}: {game_link(g)}"

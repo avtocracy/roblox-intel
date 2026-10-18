@@ -450,6 +450,50 @@ def zendesk_article(ctx: Context, src: dict, sstate: dict) -> tuple[list[Item], 
     return [item], f"{note}; text changed"
 
 
+KEEP_TEXT_CHARS = 4000
+UPGRADE_DAYS = 14
+
+
+def _refetch_text(ctx: Context, src: dict | None, rec: dict) -> str:
+    """Body text of an already-logged post, for sources that can be re-read by id or URL."""
+    if not src:
+        return ""
+    try:
+        if src.get("type") == "discourse":
+            tid = rec["id"].rsplit(":", 1)[-1]
+            if tid.isdigit():
+                return _discourse_text(ctx, src["base_url"].rstrip("/"), int(tid)).get("text", "")
+        elif src.get("type") == "newsroom" and rec.get("url"):
+            return _article(ctx, rec["url"]).get("text", "")
+    except (HttpError, SourceError):
+        return ""
+    return ""
+
+
+def upgrade_summaries(ctx: Context, summarizer: Summarizer, records: list[dict]) -> int:
+    """Replace recent keyword summaries with AI summaries once the AI is available again
+    (e.g. the free quota ran out yesterday). Raw text is only kept while it may be needed."""
+    cutoff = shift_day(ctx.day, -UPGRADE_DAYS)
+    sources = {s["id"]: s for s in ctx.settings["platform"].get("sources") or []}
+    upgraded = 0
+    for rec in sorted(records, key=lambda r: r.get("published", ""), reverse=True):
+        if not summarizer.llm_enabled:
+            break
+        if rec.get("method") != "keywords" or (rec.get("found") or "") < cutoff:
+            continue
+        text = rec.get("text") or _refetch_text(ctx, sources.get(rec.get("source")), rec)
+        if not text:
+            continue
+        result = summarizer.summarize_ai(rec["title"], text, rec.get("source_label", ""), rec.get("kind", "post"))
+        if result:
+            rec.update(result)
+            upgraded += 1
+    for rec in records:
+        if "text" in rec and (rec.get("method") != "keywords" or (rec.get("found") or "") < cutoff):
+            del rec["text"]
+    return upgraded
+
+
 FETCHERS: dict[str, Callable[[Context, dict, dict], tuple[list[Item], str]]] = {
     "discourse": discourse,
     "newsroom": newsroom,
@@ -511,11 +555,14 @@ def run(ctx: Context, summarizer: Summarizer | None = None) -> list[dict]:
                 done.append(item.id)
                 continue
             result = summarizer.summarize(item.title, item.text, label, item.kind)
-            new_records.append({
+            record = {
                 "id": item.id, "source": sid, "source_label": label, "title": item.title, "url": item.url,
                 "published": item.published or ctx.now.isoformat(timespec="seconds"), "found": ctx.day,
                 "kind": item.kind, **result,
-            })
+            }
+            if result["method"] == "keywords":  # kept so a later run can upgrade it to an AI summary
+                record["text"] = truncate(item.text or "", KEEP_TEXT_CHARS)
+            new_records.append(record)
             known.add(item.id)
             done.append(item.id)
             added += 1
@@ -527,15 +574,18 @@ def run(ctx: Context, summarizer: Summarizer | None = None) -> list[dict]:
                             f"retrying next run: {failures[0]}")
         else:
             ctx.health.ok(f"platform:{sid}", label, detail)
+    upgraded = upgrade_summaries(ctx, summarizer, log + new_records)
     store.save_platform_items(log + new_records)
     store.save_state("platform", state)
-    if summarizer.stats["llm"]:
+    stats = summarizer.stats
+    note = summarizer.disabled_reason or summarizer.problem
+    if stats["llm"]:
         ctx.health.ok("summarizer", "Summaries (GitHub Models, free tier)",
-                      f"{summarizer.stats['llm']} AI summaries, {summarizer.stats['heuristic']} keyword summaries"
-                      + (f" ({summarizer.disabled_reason})" if summarizer.disabled_reason else ""))
-    elif summarizer.stats["heuristic"]:
+                      f"{stats['llm']} AI summaries ({upgraded} upgraded from earlier keyword summaries), "
+                      f"{stats['heuristic']} keyword summaries" + (f"; note: {note}" if note else ""))
+    elif stats["heuristic"] or note:
         ctx.health.warn("summarizer", "Summaries",
-                        f"keyword summarizer used: {summarizer.disabled_reason or 'AI summaries unavailable'}")
+                        f"keyword summarizer used: {note or 'AI summaries unavailable'}")
     new_records.sort(key=lambda r: r["published"], reverse=True)
     new_records.sort(key=lambda r: LEVELS.index(r["importance"]))
     return new_records

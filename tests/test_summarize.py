@@ -35,10 +35,16 @@ def test_extractive_summary_skips_greetings_and_signoffs():
 
 
 class StubHttp:
-    def __init__(self, responses):
+    def __init__(self, responses, catalog=None):
         self.responses = list(responses)
+        self.catalog = catalog  # None -> catalog unreachable (404)
         self.min_interval = {}
         self.payloads = []
+
+    def get_json(self, url, params=None, ttl=None, headers=None):
+        if self.catalog is None:
+            raise HttpError(url, 404, "HTTP 404")
+        return self.catalog
 
     def post_json(self, url, payload, headers=None, retry_statuses=None, label=None):
         self.payloads.append(payload)
@@ -88,3 +94,54 @@ def test_permission_errors_and_missing_token():
     assert not no_token.llm_enabled and no_token.summarize("x", "y", "z")["method"] == "keywords"
     off = Summarizer(deep_merge(DEFAULTS, {"summarizer": {"provider": "none"}}), StubHttp([]), token="t")
     assert not off.llm_enabled
+
+
+def reply(content, finish="stop"):
+    class R:
+        def json(self):
+            return {"choices": [{"finish_reason": finish, "message": {"content": content}}]}
+    return R()
+
+
+GOOD = json.dumps({"summary": "Payouts change next month.", "importance": "high", "why": "money", "tags": []})
+
+
+def test_retired_models_are_replaced_from_the_catalog():
+    catalog = [{"id": "vendor/embedder", "supported_output_modalities": ["embeddings"], "rate_limit_tier": "low"},
+               {"id": "vendor/big", "rate_limit_tier": "high"}, {"id": "vendor/small", "rate_limit_tier": "low"}]
+    http = StubHttp([reply(GOOD)], catalog=catalog)
+    s = Summarizer(settings(models=["openai/retired-model"]), http, token="t")
+    assert s.summarize("DevEx", "x", "src")["method"] == "github-models:vendor/small"
+    assert s.models == ["vendor/small", "vendor/big"], "cheapest tier first, embeddings excluded"
+
+
+def test_reasoning_model_out_of_tokens_gets_one_bigger_retry():
+    http = StubHttp([reply("", finish="length"), reply(GOOD)])
+    s = Summarizer(settings(models=["m"], max_tokens=1500), http, token="t")
+    result = s.summarize("Payouts", "x", "src")
+    assert result["method"] == "github-models:m"
+    assert [p["max_tokens"] for p in http.payloads] == [1500, 4500]
+
+
+def test_rejected_options_are_dropped_and_retried():
+    http = StubHttp([HttpError("m", 400, "HTTP 400: Unsupported value: 'temperature' does not support 0.2"),
+                     HttpError("m", 400, "HTTP 400: 'response_format' is not supported with this model"),
+                     HttpError("m", 400, "HTTP 400: Unsupported parameter: 'max_tokens'; use max_completion_tokens"),
+                     reply(GOOD)])
+    s = Summarizer(settings(models=["m"]), http, token="t")
+    assert s.summarize("Payouts", "x", "src")["method"] == "github-models:m"
+    last = http.payloads[-1]
+    assert "temperature" not in last and "response_format" not in last and last["max_completion_tokens"] == 1500
+
+
+def test_prose_reply_still_counts_and_unusable_replies_are_diagnosed():
+    prose = "Roblox is raising DevEx rates for eligible creators next month. Importance: high. Check eligibility."
+    http = StubHttp([reply(prose), reply(""), reply(""), reply(""), reply(GOOD)])
+    s = Summarizer(settings(models=["m"]), http, token="t")
+    first = s.summarize("DevEx", "x", "src")
+    assert first["method"] == "github-models:m" and first["importance"] == "high"
+    assert "Importance" not in first["summary"] and first["summary"].startswith("Roblox is raising")
+    for _ in range(3):
+        assert s.summarize("Post", "x", "src")["method"] == "keywords"
+    assert "stopped after 3 unusable replies" in s.disabled_reason and "finish_reason='stop'" in s.problem
+    assert s.summarize("Post", "x", "src")["method"] == "keywords" and len(http.payloads) == 4

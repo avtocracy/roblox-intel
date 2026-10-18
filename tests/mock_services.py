@@ -29,6 +29,7 @@ class Scenario:
         self.llm_calls = 0
         self.requests: list[str] = []
         self.fail_paths: set[str] = set()  # paths that should return 503
+        self.llm_mode = "json"  # json | empty (unusable reply)
 
     # universe id -> static info
     GAMES = {
@@ -235,6 +236,12 @@ class Handler(BaseHTTPRequestHandler):
         # Help center
         if path == "/help/api/v2/help_center/en-us/articles/203314100.json":
             return self._send(200, sc.help_article())
+        # GitHub Models catalog
+        if path == "/models/catalog/models":
+            return self._send(200, [{"id": "openai/gpt-4.1-mini", "rate_limit_tier": "low",
+                                     "supported_output_modalities": ["text"]},
+                                    {"id": "openai/text-embedding-3-small", "rate_limit_tier": "low",
+                                     "supported_output_modalities": ["embeddings"]}])
         return self._send(404, {"errors": [f"no route for {path}"]})
 
     def do_POST(self) -> None:
@@ -251,12 +258,16 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(401, {"error": "bad token"})
             if body.get("model") == "openai/missing-model":
                 return self._send(404, {"error": {"code": "unknown_model", "message": "Unknown model"}})
+            if sc.llm_mode == "empty":  # e.g. a model that spends its whole answer budget elsewhere
+                return self._send(200, {"model": "mock-reasoner", "choices": [
+                    {"finish_reason": "stop", "message": {"role": "assistant", "content": ""}}]})
             prompt = body["messages"][-1]["content"]
             level = "high" if re.search(r"devex|algorithm|payout", prompt, re.I) else "low"
             title = re.search(r"Title: (.*)", prompt).group(1)
             content = json.dumps({"summary": f"AI summary of {title}. Two sentences here.",
                                   "importance": level, "why": "test rubric", "tags": ["devex"]})
-            return self._send(200, {"choices": [{"message": {"role": "assistant", "content": content}}]})
+            return self._send(200, {"choices": [{"finish_reason": "stop",
+                                                 "message": {"role": "assistant", "content": content}}]})
         return self._send(404, {"errors": ["no route"]})
 
 

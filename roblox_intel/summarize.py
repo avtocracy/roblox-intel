@@ -131,14 +131,17 @@ def rate(title: str, text: str, kind: str = "post") -> tuple[str, str, list[str]
     tags = sorted(hits_title | set(hits_body), key=lambda t: (LEVELS.index(level_of[t]), -hits_body.get(t, 0)))
     high_title = [t for t in hits_title if level_of[t] == "high"]
     high_body = [t for t, n in hits_body.items() if level_of[t] == "high" and n >= 2]
+    strong_body = [t for t, n in hits_body.items() if level_of[t] == "high" and n >= 3]
     is_release_notes = kind == "release_notes" or re.match(r"release notes", title or "", re.I)
     corporate = "corporate" in hits_title
-    if high_title and not corporate:
+    roundup = re.search(r"\brecap\b|\broundup\b|this week", title or "", re.I)  # mentions everything
+    if high_title and not corporate and not roundup:
         level, why = "high", f"title is about {', '.join(sorted(high_title))}"
-    elif len(high_body) >= 2 and not is_release_notes:
-        level, why = "high", f"discusses {', '.join(sorted(high_body))}"
-    elif high_body or any(level_of[t] == "medium" for t in hits_title):
-        level, why = "medium", f"touches on {', '.join(sorted(high_body or hits_title))}"
+    elif (len(strong_body) >= 2 and set(strong_body) & {"devex", "monetization", "discovery"}
+          and not is_release_notes and not roundup):
+        level, why = "high", f"discusses {', '.join(sorted(strong_body))}"
+    elif high_body or high_title or any(level_of[t] == "medium" for t in hits_title):
+        level, why = "medium", f"touches on {', '.join(sorted(high_body or high_title or hits_title))}"
     elif is_release_notes:
         level, why = "low", "routine release notes"
     elif any(level_of[t] == "medium" for t in hits_body):
@@ -181,18 +184,26 @@ def _extract_json(content: str) -> dict | None:
 
 
 class Summarizer:
+    MAX_BAD_REPLIES = 3  # stop calling the model after this many unusable replies in a row
+
     def __init__(self, settings: dict[str, Any], http: HttpClient, token: str | None = None):
         cfg = settings["summarizer"]
         gm = cfg.get("github_models") or {}
         self.http = http
         self.provider = str(cfg.get("provider", "auto")).lower()
         self.endpoint = gm.get("endpoint", "https://models.github.ai/inference/chat/completions")
+        self.catalog_url = gm.get("catalog", "https://models.github.ai/catalog/models")
         self.models = list(gm.get("models") or ["openai/gpt-4.1-mini"])
+        self.max_tokens = int(gm.get("max_tokens", 1500))
         self.calls_left = int(gm.get("max_calls_per_run", 25))
         self.token = token if token is not None else (os.environ.get("GITHUB_MODELS_TOKEN")
                                                       or os.environ.get("GITHUB_TOKEN"))
         self.stats = {"llm": 0, "heuristic": 0}
         self.disabled_reason = ""
+        self.problem = ""          # last unusable reply, shown in the run's source health
+        self.bad_replies = 0
+        self._catalog_checked = False
+        self._params: dict[str, dict[str, Any]] = {}  # per-model request options, adapted on 400s
         if self.provider == "none":
             self.disabled_reason = "provider set to none"
         elif not self.token:
@@ -206,35 +217,106 @@ class Summarizer:
         return not self.disabled_reason and self.calls_left > 0
 
     def summarize(self, title: str, text: str, source: str, kind: str = "post") -> dict[str, Any]:
-        if self.llm_enabled:
-            try:
-                result = self._llm(title, text, source, kind)
-                if result:
-                    self.stats["llm"] += 1
-                    return result
-            except LLMUnavailable as exc:
-                self.disabled_reason = str(exc)
+        result = self.summarize_ai(title, text, source, kind)
+        if result:
+            return result
         self.stats["heuristic"] += 1
         level, why, tags = rate(title, text, kind)
         return {"summary": extractive_summary(title, text, kind), "importance": level, "why": why,
                 "tags": tags, "method": "keywords"}
 
+    def summarize_ai(self, title: str, text: str, source: str, kind: str = "post") -> dict[str, Any] | None:
+        """AI summary, or None when AI isn't available for this item."""
+        if not self.llm_enabled:
+            return None
+        try:
+            result = self._llm(title, text, source, kind)
+        except LLMUnavailable as exc:
+            self.disabled_reason = str(exc)
+            return None
+        if result:
+            self.stats["llm"] += 1
+        return result
+
+    # ---- GitHub Models ------------------------------------------------------------
+
+    def _headers(self) -> dict[str, str]:
+        return {"Authorization": f"Bearer {self.token}", "Accept": "application/json",
+                "X-GitHub-Api-Version": "2022-11-28"}
+
+    def _resolve_models(self) -> None:
+        """Keep the configured models GitHub currently offers. If none are offered any more
+        (models get retired), fall back to the catalog's most generous free-tier chat models."""
+        if self._catalog_checked:
+            return
+        self._catalog_checked = True
+        try:
+            catalog = self.http.get_json(self.catalog_url, headers=self._headers(), ttl=86400)
+        except HttpError as exc:
+            if exc.status in (401, 403):
+                raise LLMUnavailable("GitHub Models refused the token (workflow needs "
+                                     "`permissions: models: read`)") from exc
+            return  # catalog unreachable: try the configured list as is
+        rows = catalog if isinstance(catalog, list) else (catalog.get("models") or catalog.get("data") or [])
+        offered = {str(m["id"]).lower(): m for m in rows if isinstance(m, dict) and m.get("id")}
+        if not offered:
+            return
+        keep = [m for m in self.models if m.lower() in offered]
+        if not keep:
+            def chat_model(m: dict) -> bool:
+                outputs = [str(x).lower() for x in (m.get("supported_output_modalities") or ["text"])]
+                return "text" in outputs and "embed" not in str(m.get("id", "")).lower()
+            tier = {"low": 0, "high": 1}
+            ranked = sorted((m for m in offered.values() if chat_model(m)),
+                            key=lambda m: (tier.get(str(m.get("rate_limit_tier", "")).lower(), 2), str(m["id"])))
+            keep = [str(m["id"]) for m in ranked[:3]]
+        if keep:
+            self.models = keep
+
+    def _complete(self, model: str, messages: list[dict]) -> dict:
+        """One chat completion. If the model rejects an option (temperature, max_tokens,
+        response_format), drop or rename it and retry once per option."""
+        params = self._params.setdefault(model, {"temperature": 0.2, "max_tokens": self.max_tokens,
+                                                 "response_format": {"type": "json_object"}})
+        for _ in range(4):
+            if self.calls_left <= 0:
+                raise LLMUnavailable("per-run AI call budget used up")
+            self.calls_left -= 1
+            try:
+                resp = self.http.post_json(self.endpoint, {"model": model, "messages": messages, **params},
+                                           headers=self._headers(), retry_statuses={500, 502, 503, 504})
+            except HttpError as exc:
+                msg = str(exc).lower()
+                if exc.status in (400, 422):
+                    if "response_format" in msg and "response_format" in params:
+                        params.pop("response_format")
+                        continue
+                    if "temperature" in msg and "temperature" in params:
+                        params.pop("temperature")
+                        continue
+                    if "max_tokens" in msg and "max_tokens" in params:
+                        params["max_completion_tokens"] = params.pop("max_tokens")
+                        continue
+                raise
+            try:
+                body = resp.json()
+            except ValueError:
+                body = {"_raw": resp.text[:200]}
+            return body if isinstance(body, dict) else {"_raw": str(body)[:200]}
+        raise LLMUnavailable(f"{model} rejected every request variant")
+
     def _llm(self, title: str, text: str, source: str, kind: str) -> dict[str, Any] | None:
+        self._resolve_models()
         what = {"docs": "Official documentation change (diff of added/removed lines)",
                 "page_change": "Change to an official help page (diff of added/removed lines)",
                 "release_notes": "Release notes post"}.get(kind, "Post")
         prompt = (f"Source: {source}\nType: {what}\nTitle: {title}\n\nContent:\n"
                   f"{truncate(text or '(no body text available)', 12000)}")
-        headers = {"Authorization": f"Bearer {self.token}", "Accept": "application/json",
-                   "X-GitHub-Api-Version": "2022-11-28"}
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": prompt}]
         while self.models:
             model = self.models[0]
-            payload = {"model": model, "temperature": 0.2, "max_tokens": 400, "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": prompt}]}
-            self.calls_left -= 1
             try:
-                resp = self.http.post_json(self.endpoint, payload, headers=headers,
-                                           retry_statuses={500, 502, 503, 504})
+                body = self._complete(model, messages)
             except HttpError as exc:
                 message = str(exc).lower()
                 if exc.status == 404 or (exc.status in (400, 422) and "model" in message and any(
@@ -242,6 +324,7 @@ class Summarizer:
                     self.models.pop(0)  # model not in the catalog -> try the next one
                     continue
                 if exc.status in (400, 413, 422):
+                    self.problem = f"{model} rejected one post ({exc.reason})"
                     return None  # this post only (e.g. content filter); keyword summary instead
                 if exc.status in (401, 403):
                     raise LLMUnavailable("GitHub Models refused the token (workflow needs "
@@ -249,18 +332,63 @@ class Summarizer:
                 if exc.status == 429:
                     raise LLMUnavailable("GitHub Models free quota reached for now") from exc
                 raise LLMUnavailable(f"GitHub Models unavailable: {exc.reason}") from exc
-            try:
-                content = resp.json()["choices"][0]["message"]["content"]
-            except (ValueError, KeyError, IndexError, TypeError):
-                return None
-            data = _extract_json(content or "")
-            if not data or not str(data.get("summary", "")).strip():
-                return None
+            result = self._parse(body, model, title, text, kind)
+            if result is None and self._ran_out_of_tokens(body, model):
+                continue  # retried below with a bigger output budget
+            return result
+        raise LLMUnavailable("none of the configured GitHub Models are available")
+
+    def _ran_out_of_tokens(self, body: dict, model: str) -> bool:
+        """Reasoning models can spend the whole output budget thinking: allow one bigger retry."""
+        choice = (body.get("choices") or [{}])[0] or {}
+        params = self._params.get(model, {})
+        key = "max_tokens" if "max_tokens" in params else "max_completion_tokens"
+        if choice.get("finish_reason") == "length" and params.get(key, 0) < 6000 and not self._content(body):
+            params[key] = min(6000, int(params.get(key, self.max_tokens)) * 3)
+            self.bad_replies = max(0, self.bad_replies - 1)
+            return True
+        return False
+
+    @staticmethod
+    def _content(body: dict) -> str:
+        choices = body.get("choices") or []
+        choice = choices[0] if choices and isinstance(choices[0], dict) else {}
+        content = (choice.get("message") or {}).get("content")
+        if isinstance(content, list):  # content parts
+            content = "".join(str(p.get("text", "")) for p in content if isinstance(p, dict))
+        return str(content or "").strip()
+
+    def _parse(self, body: dict, model: str, title: str, text: str, kind: str) -> dict[str, Any] | None:
+        content = self._content(body)
+        method = f"github-models:{model}"
+        data = _extract_json(content) if content else None
+        if data and str(data.get("summary", "")).strip():
+            self.bad_replies = 0
             level = str(data.get("importance", "")).lower().strip()
             if level not in LEVELS:
                 level = rate(title, text, kind)[0]
             tags = [str(t).lower() for t in (data.get("tags") or []) if isinstance(t, str)][:4]
             return {"summary": truncate(" ".join(str(data["summary"]).split()), 600), "importance": level,
-                    "why": truncate(str(data.get("why", "")).strip(), 160), "tags": tags,
-                    "method": f"github-models:{model}"}
-        raise LLMUnavailable("none of the configured GitHub Models are available")
+                    "why": truncate(str(data.get("why", "")).strip(), 160), "tags": tags, "method": method}
+        if len(content) >= 40 and not content.lstrip().startswith("{"):
+            self.bad_replies = 0  # a prose answer instead of JSON is still a real summary
+            m = re.search(r"importance\W{0,5}(high|medium|low)", content, re.I)
+            level = m.group(1).lower() if m else rate(title, text, kind)[0]
+            prose = re.sub(r"(?im)^\W*(importance|why|tags)\W.*$", "", content)
+            prose = re.sub(r"(?i)\bimportance\W{0,5}(high|medium|low)\b\W*", "", prose)
+            return {"summary": truncate(" ".join(re.sub(r"[#*_`>]+", " ", prose).split()), 600),
+                    "importance": level, "why": "AI summary (free-form reply)", "tags": [], "method": method}
+        choices = body.get("choices") or [{}]
+        finish = (choices[0] or {}).get("finish_reason") if isinstance(choices[0], dict) else None
+        detail = (f"finish_reason={finish!r}, served by {body.get('model') or model!r}, "
+                  f"content={content[:80]!r}")
+        if body.get("_raw"):
+            detail += f", raw={body['_raw'][:80]!r}"
+        usage = body.get("usage") or {}
+        if usage:
+            detail += f", tokens out={usage.get('completion_tokens')}"
+        self.bad_replies += 1
+        self.problem = f"{model} replied without a usable summary ({detail})"
+        if self.bad_replies >= self.MAX_BAD_REPLIES:
+            self.disabled_reason = f"stopped after {self.bad_replies} unusable replies; last: {self.problem}"
+        return None

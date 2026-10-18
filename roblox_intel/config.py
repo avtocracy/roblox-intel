@@ -71,7 +71,9 @@ DEFAULTS: dict[str, Any] = {
         "provider": "auto",
         "github_models": {
             "endpoint": "https://models.github.ai/inference/chat/completions",
-            "models": ["openai/gpt-4.1-mini", "openai/gpt-4o-mini"],
+            "catalog": "https://models.github.ai/catalog/models",
+            "models": ["openai/gpt-4.1-mini", "openai/gpt-4o-mini", "openai/gpt-5-mini", "microsoft/phi-4"],
+            "max_tokens": 1500,
             "max_calls_per_run": 25,
             "min_interval_seconds": 4.5,
         },

@@ -62,7 +62,8 @@ Your dashboard will be at `https://<you>.github.io/<repo>/` after the first run.
 ### 5. Enable Actions and run it once
 
 1. Open the **Actions** tab. If GitHub asks, click **I understand my workflows, go ahead and enable them**.
-2. Pick **Daily Roblox Intel** → **Run workflow**. A full run takes a few minutes.
+2. Pick **Daily Roblox Intel** → **Run workflow**. A full run takes a few minutes. Untick
+   "Send the Discord brief" for a test run that shouldn't post to Discord.
 3. Check your Discord channel and the Pages URL.
 
 After that it runs on its own every day at 14:17 UTC. To change the time, edit the `cron:` line in
@@ -74,10 +75,17 @@ If the "Commit history" step fails with a permission error, go to **Settings** �
 ### AI summaries (free, nothing to set up)
 
 Platform posts are summarized with **GitHub Models**, GitHub's free AI tier. The workflow uses its
-built-in token, with `permissions: models: read`. There is no account, key or bill. If the free
-daily quota runs out, or GitHub Models is unavailable to your account, the run automatically falls
-back to a built-in keyword summarizer and says so in the source-health section. To turn AI off,
-set `summarizer.provider: none` in `config/settings.yml`.
+built-in token, with `permissions: models: read`. There is no account, key or bill.
+
+* The preferred models in `config/settings.yml` are checked against GitHub's live model catalog on
+  each run. Retired ones are skipped, and if none are left, the most generous free-tier chat model in
+  the catalog is used.
+* If AI summaries are unavailable (quota used up, an outage, or replies that can't be used), the run
+  falls back to a built-in keyword summarizer. The source-health section says why, including what
+  the model actually sent back.
+* The next run that has AI again upgrades the last 14 days of keyword summaries in place.
+
+To turn AI off, set `summarizer.provider: none` in `config/settings.yml`.
 
 ---
 
