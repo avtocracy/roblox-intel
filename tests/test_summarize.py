@@ -212,3 +212,14 @@ def test_non_json_reply_and_redirects_are_reported_not_followed():
         assert s.summarize("Post", "x", "src")["method"] == "keywords"
     assert "raw='OK\\r\\n'" in s.problem and "HTTP 302" in s.problem and "elsewhere.test" in s.problem
     assert set(http.urls) == {"https://ai.example/v1/chat/completions"}, "the API key is never sent elsewhere"
+
+
+def test_local_high_ratings_need_evidence_in_the_post():
+    hype = json.dumps({"summary": "Adds debug tints in Studio.", "importance": "high",
+                       "why": "affects DevEx rates", "tags": ["devex", "monetization"]})
+    http = StubHttp([ollama(hype), ollama(GOOD)], local_models=["qwen2.5:3b"])
+    s = Summarizer(local(), http, env={})
+    tint = s.summarize("SLIM debug tints in Studio", "Enable tints via the Developer Console to verify SLIM.", "src")
+    assert tint["importance"] == "medium" and "DevEx" not in tint["why"] and "devex" not in tint["tags"]
+    devex = s.summarize("DevEx rate increase", "The DevEx rate rises to $0.0040 per Robux for eligible creators.", "src")
+    assert devex["importance"] == "high", "kept when the post really is about money"

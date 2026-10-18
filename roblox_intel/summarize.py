@@ -32,7 +32,8 @@ For each official Roblox post or documentation change you receive, reply with ON
 {"summary": "...", "importance": "high|medium|low", "why": "...", "tags": ["..."]}
 
 summary: 2-3 plain sentences on what changed and what a developer should do about it. No hype, no markdown.
-importance, judged for that solo developer:
+Only state effects the text actually says; never invent impacts on money, DevEx or discovery.
+importance, judged for that solo developer (most posts are medium or low; high is rare):
   high   = changes money or reach: DevEx rates or eligibility, payouts, revenue share, fees or pricing,
            discovery/recommendation/charts/search changes, policies or ratings that can restrict a game,
            deprecations or deadlines that require action, new ways to earn.
@@ -176,6 +177,15 @@ def _rate_change(diff: str) -> tuple[str, str, list[str]]:
     if any(level_of[t] == "medium" for t in hits):
         return "medium", "documents new or changed features", tags
     return "low", "wording or minor documentation edits", tags
+
+
+def calibrate(level: str, why: str, title: str, text: str, kind: str = "post") -> tuple[str, str, list[str]]:
+    """Small local models call almost everything "high" and invent reasons. Keep their rating
+    only when the post itself shows money/reach/policy evidence; tags come from the rubric."""
+    evidence, evidence_why, tags = rate(title, text, kind)
+    if level == "high" and evidence != "high":
+        return "medium", f"no money, reach or policy change stated ({evidence_why})", tags
+    return level, why, tags
 
 
 def _extract_json(content: str) -> dict | None:
@@ -417,11 +427,14 @@ class Summarizer:
         if data and str(data.get("summary", "")).strip():
             self.bad_replies = 0
             level = str(data.get("importance", "")).lower().strip()
-            if level not in LEVELS:
-                level = rate(title, text, kind)[0]
+            why = truncate(str(data.get("why", "")).strip(), 160)
             tags = [str(t).lower() for t in (data.get("tags") or []) if isinstance(t, str)][:4]
+            if level not in LEVELS:
+                level, why, tags = rate(title, text, kind)
+            elif self.backend == "local":
+                level, why, tags = calibrate(level, why, title, text, kind)
             return {"summary": truncate(" ".join(str(data["summary"]).split()), 600), "importance": level,
-                    "why": truncate(str(data.get("why", "")).strip(), 160), "tags": tags, "method": method}
+                    "why": why, "tags": tags, "method": method}
         if len(content) >= 40 and not content.lstrip().startswith("{"):
             self.bad_replies = 0  # a prose answer instead of JSON is still a real summary
             m = re.search(r"importance\W{0,5}(high|medium|low)", content, re.I)
