@@ -265,3 +265,13 @@ def test_local_high_ratings_need_evidence_in_the_post():
     assert tint["importance"] == "medium" and "DevEx" not in tint["why"] and "devex" not in tint["tags"]
     devex = s.summarize("DevEx rate increase", "The DevEx rate rises to $0.0040 per Robux for eligible creators.", "src")
     assert devex["importance"] == "high", "kept when the post really is about money"
+
+
+def test_local_misread_of_a_docs_diff_is_corrected_by_the_evidence():
+    diff = ("Page: creator-rewards.md\n- To earn, you must be ID-verified and have a valid DevEx account.\n"
+            "+ To earn, you must be ID-verified.")
+    misread = json.dumps({"summary": "Removed redundant text.", "importance": "low", "why": "wording", "tags": []})
+    http = StubHttp([ollama(misread)], local_models=["qwen2.5:3b"])
+    result = Summarizer(local(), http, env={}).summarize("Creator Rewards docs updated", diff, "src", "docs")
+    assert result["importance"] == "high" and "DevEx account" in result["why"]
+    assert result["summary"] == "Removed redundant text." and result["method"] == "local:qwen2.5:3b"

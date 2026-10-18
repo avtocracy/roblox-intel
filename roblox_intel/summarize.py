@@ -339,10 +339,14 @@ def _rate_change(diff: str) -> tuple[str, str, list[str]]:
 
 def calibrate(level: str, why: str, title: str, text: str, kind: str = "post") -> tuple[str, str, list[str]]:
     """Small local models call almost everything "high" and invent reasons. Keep their rating
-    only when the post itself shows money/reach/policy evidence; tags come from the rubric."""
+    only when the post itself shows money/reach/policy evidence; tags come from the rubric.
+    They also read +/- diffs poorly ("removed redundant information" for a dropped DevEx
+    requirement), so a concrete rule change found in a docs diff makes it "high" anyway."""
     evidence, evidence_why, tags = rate(title, text, kind)
     if level == "high" and evidence != "high":
         return "medium", f"no money, reach or policy change stated ({evidence_why})", tags
+    if evidence == "high" and level != "high" and kind in ("docs", "page_change"):
+        return "high", evidence_why, tags
     return level, why, tags
 
 
