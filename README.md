@@ -86,6 +86,12 @@ couple of minutes to each run.
 * If the model can't start, or its replies can't be used, the run falls back to a built-in keyword
   summarizer. The source-health section says why. The next run that has AI again upgrades the last
   14 days of keyword summaries in place.
+* **What counts as "high":** small models call nearly everything important, so a "high" only stands
+  when the post itself shows a money, reach or policy change (DevEx, payouts, fees, pricing, discovery,
+  policy, shutdowns). For Creator Docs changes only the words that actually changed count: an amount or
+  threshold that changed, or a rule or deadline that was added or removed. Rewording, moved text and
+  renamed menus don't, and pages about ads tools, creator programs and avatar-item (UGC) rules stop at
+  medium. The dashboard shows the reason under each item.
 * **Optional, better quality:** point `summarizer.hosted` in `config/settings.yml` at any
   OpenAI-compatible chat API you have a key for (several providers have free tiers, which can change),
   and add the key as a repo secret named `AI_API_KEY`. With `provider: auto`, the local model still

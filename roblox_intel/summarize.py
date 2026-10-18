@@ -13,10 +13,12 @@ Three engines, best first:
 
 from __future__ import annotations
 
+import difflib
 import json
 import os
 import re
 import time
+from collections import Counter
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -54,9 +56,11 @@ RUBRIC: list[tuple[str, str, re.Pattern]] = [
         r"\bsorts?\b|search (results|ranking)|\branking\b", re.I)),
     ("policy", "high", re.compile(
         r"\bpolic(y|ies)\b|guidelines|terms of (use|service)|community standards|compliance|enforcement|"
-        r"maturity|age (checks?|verification|ratings?|estimation|guidelines)|content labels?|questionnaire", re.I)),
+        r"maturity|age[- ](checks?|checked|verification|verified|ratings?|estimation|guidelines)|content labels?|"
+        r"questionnaire", re.I)),
     ("deprecation", "high", re.compile(
         r"deprecat|sunset|end of life|no longer (be )?(supported|available)|will be removed|"
+        r"will (no longer )?be (disabled|discontinued|retired|turned off|shut down)|"
         r"breaking change|migrat(e|ion) (by|before)|deadline", re.I)),
     ("ads", "medium", re.compile(r"\bads?\b|advertis|sponsored|rewarded video|immersive ads", re.I)),
     ("analytics", "medium", re.compile(r"analytics|dashboard|insights|retention|funnel|benchmarks?", re.I)),
@@ -120,11 +124,6 @@ def extractive_summary(title: str, text: str, kind: str = "post", max_chars: int
     return truncate(summary, max_chars)
 
 
-_SUBSTANTIVE = re.compile(
-    r"\d+(\.\d+)?\s?%|\$\s?\d|\b\d[\d,]*\s?robux\b|\bmust\b|\brequired?\b|no longer|eligib|deadline|"
-    r"\beffective\b|starting (on|in|from)|will (now|no longer|be removed)", re.I)
-
-
 def rate(title: str, text: str, kind: str = "post") -> tuple[str, str, list[str]]:
     """Keyword rubric -> (importance, why, tags)."""
     if kind in ("docs", "page_change"):
@@ -160,21 +159,180 @@ def rate(title: str, text: str, kind: str = "post") -> tuple[str, str, list[str]
     return level, why, tags[:4]
 
 
+# ---- docs and help-page diffs ---------------------------------------------------------------
+
+# Pages that matter less to a game developer whatever they say: never rated above "medium".
+DOCS_CAPS: list[tuple[re.Pattern, str]] = [
+    (re.compile(r"^marketplace/"), "avatar-item (UGC) rules"),
+    (re.compile(r"^creator-programs/"), "creator programs"),
+    (re.compile(r"^production/promotion/(?!content-maturity|experience-guidelines|regional-content)"),
+     "ads and promotion tools"),
+]
+_RULE = re.compile(r"\b(must|requir|eligib|ineligib|qualif|no longer|deadline|effective immediately|prohibit|"
+                   r"not allowed|at least|minimum|maximum)", re.I)
+_DATED = re.compile(r"\b(starting|beginning|effective|as of|until|by|before|after)\s+(on\s+)?"
+                    r"(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d", re.I)
+_MONEY = re.compile(r"\bprices?\b|\bsales\b|\brevenue\b|\bearnings\b|\brefunds?\b|\bpaid\b", re.I)
+_QUANTITY = re.compile(r"(robux|usd|dollars?|days?|weeks?|months?|years?|hours?|minutes?|players?|plays|users?|"
+                       r"visits?|sessions?|members?|items?|sales?|purchases?|impressions?|percent|per)$")
+# code samples (Luau) and front-matter comments
+_NOISE = re.compile(r"^\s*(?:(?:local|function|return|elseif|end)\b|--|print\(|[\w.\[\]]+\s*=[^=]|comment:)")
+_TOKEN = re.compile(r"\$?\d[\d,.]*%?\+?|[^\W\d_][\w'’-]*")
+_LIST_MARK = re.compile(r"^\s*(\d+[.)]|[-*•]|#+)\s+")
+_DEPRECATION = next(rx for tag, _, rx in RUBRIC if tag == "deprecation")
+
+
+def _tokens(line: str) -> list[str]:
+    return [t.rstrip(".,") for t in _TOKEN.findall(_LIST_MARK.sub("", line).lower())]
+
+
+def _numbers(tokens: list[str], amounts_only: bool = False) -> set[str]:
+    """Numbers in a line; with amounts_only just '$0.0038', '30%', '13+', '250 unique plays'...
+    (not step numbers or '6-digit code')."""
+    found = set()
+    for k, tok in enumerate(tokens):
+        if tok[0] != "$" and not tok[0].isdigit():
+            continue
+        if not amounts_only or tok[0] == "$" or tok[-1] in "%+" or any(map(_QUANTITY.match, tokens[k + 1:k + 4])):
+            found.add(tok.strip("$%+").replace(",", ""))
+    return found
+
+
+def _rules(text: str) -> set[str]:
+    """Rule words in a line: requirements, eligibility, dated changes, shutdowns."""
+    found = {m.group(1).lower() for m in _RULE.finditer(text)}
+    if _DATED.search(text):
+        found.add("dated")
+    if _DEPRECATION.search(text):
+        found.add("ending")
+    return found
+
+
+def _topics(text: str) -> dict[str, int]:
+    """Money/reach/policy topics (the rubric's "high" tags) mentioned in a piece of docs text."""
+    hits = {tag: n for tag, level, rx in RUBRIC if level == "high" and (n := len(rx.findall(text)))}
+    if n := len(_MONEY.findall(text)):
+        hits["monetization"] = hits.get("monetization", 0) + n
+    return hits
+
+
+def _diff_pages(diff: str) -> dict[str, list[tuple[str, str]]]:
+    """The 'Page: path' / '+ line' / '- line' text written by platform.git_docs (help-page
+    diffs have no Page lines) -> {path: [(sign, line), ...]}."""
+    pages: dict[str, list[tuple[str, str]]] = {}
+    page = ""
+    for line in (diff or "").splitlines():
+        if line.startswith("Page: "):
+            page = line[6:].strip()
+        elif line[:2] in ("+ ", "- "):
+            pages.setdefault(page, []).append((line[0], line[2:]))
+    return pages
+
+
+def _changed_units(lines: list[tuple[str, str]]) -> list[tuple[str, str, list[str]]]:
+    """(old, new, changed words) for each line that really changed, in page order. Lines that
+    only moved or changed case or markup drop out, as do code and front-matter comments; a
+    reworded line is paired with its old version so that only the words that differ count."""
+    def key(line: str) -> str:
+        return " ".join(_tokens(line))
+    removed = [(i, l) for i, (sign, l) in enumerate(lines) if sign == "-"]
+    added = [(i, l) for i, (sign, l) in enumerate(lines) if sign == "+"]
+    same = {key(l) for _, l in removed} & {key(l) for _, l in added}
+    removed = [(i, l) for i, l in removed if key(l) not in same and _tokens(l) and not _NOISE.match(l)]
+    unpaired = {i: l for i, l in added if key(l) not in same and _tokens(l) and not _NOISE.match(l)}
+    units = []
+    for i, old in removed:
+        old_t = _tokens(old)
+        ratios = {j: difflib.SequenceMatcher(None, old_t, _tokens(new), autojunk=False).ratio()
+                  for j, new in unpaired.items()}
+        j = max(ratios, key=ratios.__getitem__, default=None)
+        if j is None or ratios[j] <= 0.5:
+            units.append((i, old, "", old_t))
+            continue
+        new = unpaired.pop(j)
+        new_t = _tokens(new)
+        delta = [tok for op, a1, a2, b1, b2 in difflib.SequenceMatcher(None, old_t, new_t, autojunk=False)
+                 .get_opcodes() if op != "equal" for tok in old_t[a1:a2] + new_t[b1:b2]]
+        units.append((min(i, j), old, new, delta))
+    units += [(j, "", new, _tokens(new)) for j, new in unpaired.items()]
+    return [unit[1:] for unit in sorted(units)]
+
+
+def _quote(old: str, new: str) -> str:
+    """How a changed line reads in a "why": the new wording, or what a rule no longer says."""
+    def plain(text: str) -> str:
+        return truncate(_LIST_MARK.sub("", re.sub(r"[*`]", "", text)).strip(" -"), 100)
+
+    def words(text: str) -> list[str]:
+        return [w.lower().strip(".,;:!?()\"'") for w in text.split()]
+    if old and new:
+        old_w = old.split()
+        ops = difflib.SequenceMatcher(None, words(old), words(new), autojunk=False).get_opcodes()
+        if all(op in ("equal", "delete") for op, *_ in ops):
+            gone = " ".join(w for op, a1, a2, _, _ in ops if op == "delete" for w in old_w[a1:a2])
+            return f'no longer says "{plain(gone)}"'
+    return f'"{plain(new)}"' if new else f'removed "{plain(old)}"'
+
+
 def _rate_change(diff: str) -> tuple[str, str, list[str]]:
-    """Docs/help-page diffs: judge only the changed lines, and require a concrete
-    rule change (numbers, 'must', eligibility, dates...) before calling it high."""
-    changed = "\n".join(l[2:] for l in (diff or "").splitlines() if l[:2] in ("+ ", "- "))
+    """Docs/help-page diffs. Only the words that really changed count. "high" needs a concrete
+    rule change about money, reach or policy: an amount or threshold changed, a rule ("must",
+    "eligible", "starting May 30", "will be disabled"...) added or removed next to such a topic,
+    or a rule sentence that now says something different about one. Rewording, moved text,
+    renamed menus and deleted pages don't count; ads/UGC/creator-program pages stop at medium."""
     level_of = {tag: level for tag, level, _ in RUBRIC}
-    hits = {tag: len(rx.findall(changed)) for tag, _, rx in RUBRIC}
-    hits = {t: n for t, n in hits.items() if n}
+    hits: Counter = Counter()
+    evidence: list[tuple[float, set[str], str]] = []  # (how clear, topics, quote)
+    capped: list[str] = []
+    busiest = topical = 0
+    for page, lines in _diff_pages(diff).items():
+        units = _changed_units(lines)
+        cap = next((why for rx, why in DOCS_CAPS if rx.search(page)), None)
+        removed_page = len(units) >= 5 and not any(new for _, new, _ in units)  # deleted or moved away
+        texts = [f"{old} {new}" for old, new, _ in units]
+        substance = 0
+        for k, (old, new, delta) in enumerate(units):
+            hits.update({tag: n for tag, _, rx in RUBRIC if (n := len(rx.findall(texts[k])))})
+            changed = " ".join(delta)
+            old_t, new_t = _tokens(old), _tokens(new)
+            if old and new:
+                before, after = _numbers(old_t), _numbers(new_t)
+                amount = (before != after and bool(before and after)) or _numbers(old_t, True) != _numbers(new_t, True)
+                rule = _rules(old) != _rules(new)
+            else:  # a whole new or deleted line
+                amount, rule = bool(_numbers(old_t or new_t, True)), bool(_rules(old or new))
+            changed_topics = _topics(changed)
+            if len(delta) >= 4 or amount or changed_topics:
+                substance += 1
+                topical += any(level_of[tag] != "low" for tag, _, rx in RUBRIC if rx.search(changed))
+            if removed_page:
+                continue
+            if changed_topics and (_rules(old) | _rules(new)):
+                topics = changed_topics  # a rule now says something different about money/reach/policy
+                clarity = 0
+            elif amount or rule:
+                clarity = 0 if amount else 1
+                topics = _topics(" ".join(texts[max(0, k - 2):k + 3]))  # ...next to such a topic
+            else:
+                continue
+            if topics and cap:
+                capped.append(cap)
+            elif topics:  # quote what the page says now, not front matter, where possible
+                rank = 2 if re.match(r"(title|description):", new or old) else clarity + 0.5 * (not new)
+                evidence.append((rank, set(topics), _quote(old, new)))
+        busiest = max(busiest, substance)
+        if not cap and len(units) >= 5 and not any(old for old, _, _ in units):  # a whole new page
+            topics = _topics(" ".join(texts))
+            if sum(topics.values()) >= 4 and _rules(" ".join(texts)):
+                title = next((new[6:].strip() for _, new, _ in units if new.startswith("title:")), page)
+                evidence.append((-1, set(topics), f'new page "{title}"'))
     tags = sorted(hits, key=lambda t: (LEVELS.index(level_of[t]), -hits[t]))[:4]
-    high = sorted(t for t, n in hits.items() if level_of[t] == "high")
-    substantive = _SUBSTANTIVE.search(changed)
-    if high and substantive and sum(hits[t] for t in high) >= 2:
-        return "high", f"changes {', '.join(high)} rules ('{substantive.group(0).strip()}')", tags
-    if high:
-        return "medium", f"edits {', '.join(high)} docs", tags
-    if any(level_of[t] == "medium" for t in hits):
+    if evidence:
+        topics = ", ".join(sorted(set().union(*(t for _, t, _ in evidence))))
+        return "high", f"changes {topics} rules: {min(evidence, key=lambda e: e[0])[2]}", tags
+    if capped:
+        return "medium", f"changes {capped[0]}", tags
+    if busiest >= 3 or topical:
         return "medium", "documents new or changed features", tags
     return "low", "wording or minor documentation edits", tags
 

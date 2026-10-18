@@ -28,6 +28,48 @@ def test_rubric_for_docs_diffs_needs_a_concrete_change():
     assert rate("Publishing & policy docs updated", "Page: x.md\n+ Fixed a typo in the heading text.", "docs")[0] == "low"
 
 
+def docs(*lines, page="production/publishing/kids-and-select.md"):
+    return rate("Publishing & policy docs updated", "\n".join([f"Page: {page}", *lines]), "docs")
+
+
+def test_docs_high_needs_a_real_rule_change():
+    # cases taken from real Creator Docs commits
+    level, why, _ = docs("- Evaluation requires 500 unique plays from age-checked users in the last 60 days.",
+                         "+ Evaluation requires 250 unique plays from age-checked users in the last 60 days.")
+    assert level == "high" and "250 unique plays" in why
+    level, why, _ = docs("- To earn, you must be ID-verified and have a valid DevEx account.",
+                         "+ To earn, you must be ID-verified.", page="creator-rewards.md")
+    assert level == "high" and why.endswith('no longer says "and have a valid DevEx account."')
+    assert docs("+ Starting May 30, 2026, cross-experience developer product sales will be disabled.",
+                page="production/monetization/developer-products.md")[0] == "high"
+    faq = ["+ title: Discovery FAQ", "+ Discovery connects users with games that create lasting value.",
+           "+ The Recommended for You algorithm ranks games on these signals:",
+           "+ Play through rate and first play bounce rate.",
+           "+ Games must have content maturity labels to appear in recommendations.",
+           "+ Search results and Charts use different signals."]
+    level, why, _ = docs(*faq, page="discovery-faq.md")
+    assert level == "high" and 'new page "Discovery FAQ"' in why
+
+
+def test_docs_wording_moves_and_noise_are_not_high():
+    assert docs("- All games must follow the Experience Guidelines policy.",
+                "+ All games **must** follow the experience guidelines policy.")[0] == "low", "moved/re-cased"
+    assert docs("- Experiences rated Restricted must follow the age-verified policy.",
+                "+ Games rated Restricted must follow the age-verified policy.")[0] == "low", "renamed term"
+    assert docs("+ 1. Click Add Phone. The system texts your phone a 6-digit code.",
+                "+ Verified accounts follow the community guidelines and policy.",
+                page="production/publishing/account-verification.md")[0] == "medium", "step numbers"
+    assert docs("+ local threeMonths = 90 * 24 * 60 * 60 -- payouts policy",
+                page="production/monetization/roblox-plus.md")[0] == "low", "code"
+    deleted = [f"- Rule {n}: you must not upload copyrighted audio under the IP policy." for n in range(6)]
+    assert docs(*deleted, page="production/publishing/dmca-guidelines.md")[0] == "medium", "page removed"
+    level, why, _ = docs("- Pay an upload fee of 80 Robux per item.", "+ Pay an upload fee of 500 Robux per item.",
+                         page="marketplace/marketplace-fees-and-commissions.md")
+    assert level == "medium" and why == "changes avatar-item (UGC) rules"
+    assert docs("- Ads Manager charges a 10% fee on ad credit.", "+ Ads Manager charges a 15% fee on ad credit.",
+                page="production/promotion/ads-manager.md")[1] == "changes ads and promotion tools"
+
+
 def test_extractive_summary_skips_greetings_and_signoffs():
     text = ("Hi Creators,\n\nToday we are launching regional pricing for passes in more countries. "
             "Prices adjust automatically to local purchasing power. You can opt out in the Creator Dashboard.\n\n"
