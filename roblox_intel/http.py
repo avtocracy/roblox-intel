@@ -133,11 +133,12 @@ class HttpClient:
 
     def post_json(self, url: str, payload: Any, headers: dict | None = None,
                   retry_statuses: set[int] | None = None, label: str | None = None,
-                  allow_redirects: bool = True) -> requests.Response:
+                  allow_redirects: bool = True, timeout: float | None = None) -> requests.Response:
         """POST without caching. `label` replaces the URL in logs and errors
         (use it for URLs that embed a secret, like Discord webhooks)."""
         return self._request("POST", url, json_body=payload, headers=headers or {},
-                             retry_statuses=retry_statuses, label=label, allow_redirects=allow_redirects)
+                             retry_statuses=retry_statuses, label=label, allow_redirects=allow_redirects,
+                             timeout=timeout)
 
     def summary(self) -> dict[str, dict[str, Any]]:
         return {host: vars(s).copy() for host, s in sorted(self.stats.items())}
@@ -181,7 +182,7 @@ class HttpClient:
 
     def _request(self, method: str, url: str, headers: dict, json_body: Any = None,
                  retry_statuses: set[int] | None = None, label: str | None = None,
-                 allow_redirects: bool = True) -> requests.Response:
+                 allow_redirects: bool = True, timeout: float | None = None) -> requests.Response:
         host = urlsplit(url).netloc
         shown = label or url
         stats = self._stats(host)
@@ -197,7 +198,7 @@ class HttpClient:
             resp: requests.Response | None = None
             try:
                 resp = self.session.request(method, url, headers=headers, json=json_body,
-                                            timeout=self.timeout, allow_redirects=allow_redirects)
+                                            timeout=timeout or self.timeout, allow_redirects=allow_redirects)
             except requests.RequestException as exc:
                 last_problem = type(exc).__name__ if label else _short_reason(exc)
                 unreachable = isinstance(exc, requests.ConnectionError) and not isinstance(exc, requests.Timeout)

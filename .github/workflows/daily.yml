@@ -14,7 +14,6 @@ permissions:
   contents: write    # commit the day's data/ to the repo
   pages: write       # publish the dashboard
   id-token: write    # required by actions/deploy-pages
-  models: read       # free AI summaries through GitHub Models
 
 concurrency:
   group: roblox-intel
@@ -23,7 +22,7 @@ concurrency:
 jobs:
   collect:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     outputs:
       site: ${{ steps.site.outputs.uploaded }}
     steps:
@@ -43,18 +42,32 @@ jobs:
           key: http-cache-${{ github.run_id }}
           restore-keys: http-cache-
 
+      - name: Start the local AI model (free, runs on this machine)
+        continue-on-error: true   # without it, summaries fall back to keywords
+        timeout-minutes: 10
+        run: |
+          models=$(python -c "from roblox_intel.config import load_settings as s; c = s()['summarizer']; print(' '.join(c['local']['models']) if c['provider'] in ('auto', 'local') else '')")
+          if [ -z "$models" ]; then echo "Local AI not used (summarizer.provider)."; exit 0; fi
+          curl -fsSL https://ollama.com/install.sh | sh
+          if ! curl -sf http://127.0.0.1:11434/api/version > /dev/null; then
+            (nohup ollama serve > /tmp/ollama.log 2>&1 &)
+          fi
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:11434/api/version > /dev/null && break; sleep 2; done
+          for m in $models; do ollama pull "$m" && exit 0; done
+          exit 1
+
       - name: Check data sources
         run: python -m roblox_intel check-sources
         continue-on-error: true   # a failing source is reported, not fatal
         env:
-          GITHUB_TOKEN: ${{ github.token }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
 
       - name: Collect, analyze, send Discord brief, build dashboard
         run: python -m roblox_intel run ${{ github.event_name == 'workflow_dispatch' && !inputs.discord && '--no-discord' || '' }}
         env:
-          GITHUB_TOKEN: ${{ github.token }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}   # optional, only for a hosted AI
 
       - name: Commit history
         if: ${{ !cancelled() }}

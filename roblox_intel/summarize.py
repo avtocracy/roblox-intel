@@ -1,10 +1,14 @@
 """Summaries and importance ratings for platform posts.
 
-Two engines:
-  * GitHub Models (free tier), called with the workflow's own GITHUB_TOKEN
-    (needs `permissions: models: read`). No extra account or key.
-  * A built-in extractive summarizer + keyword rubric. Used when no token is
-    available, when the free quota runs out, or when provider is "none".
+Three engines, best first:
+  * local:  a small open model (default qwen2.5:3b) served by Ollama on the GitHub Actions
+            runner itself. Free, no account, no API key; the workflow starts it.
+  * hosted: optional, any OpenAI-compatible chat API you have a key for (set in settings.yml,
+            key in a repo secret). Off unless configured.
+  * keywords: a built-in extractive summarizer + keyword rubric, used whenever no AI is
+            available. Keyword summaries are upgraded to AI summaries on a later run.
+
+(GitHub Models, the original free option, was retired by GitHub on July 30, 2026.)
 """
 
 from __future__ import annotations
@@ -12,8 +16,11 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from typing import Any
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import urlsplit
+
+import requests
 
 from .http import HttpClient, HttpError
 from .util import truncate
@@ -187,36 +194,46 @@ def _extract_json(content: str) -> dict | None:
 class Summarizer:
     MAX_BAD_REPLIES = 3  # stop calling the model after this many unusable replies in a row
 
-    def __init__(self, settings: dict[str, Any], http: HttpClient, token: str | None = None):
+    def __init__(self, settings: dict[str, Any], http: HttpClient, env: Any = None):
         cfg = settings["summarizer"]
-        gm = cfg.get("github_models") or {}
+        env = os.environ if env is None else env
         self.http = http
-        self.provider = str(cfg.get("provider", "auto")).lower()
-        self.endpoint = gm.get("endpoint", "https://models.github.ai/inference/chat/completions")
-        self.catalog_url = gm.get("catalog", "https://models.github.ai/catalog/models")
-        self.models = list(gm.get("models") or ["openai/gpt-4.1-mini"])
-        self.max_tokens = int(gm.get("max_tokens", 1500))
-        self.calls_left = int(gm.get("max_calls_per_run", 25))
-        self.token = token if token is not None else (os.environ.get("GITHUB_MODELS_TOKEN")
-                                                      or os.environ.get("GITHUB_TOKEN"))
+        self.provider = str(cfg.get("provider", "auto")).lower()  # auto | local | hosted | none
+        local = cfg.get("local") or {}
+        self.local_url = str(local.get("url", "http://127.0.0.1:11434")).rstrip("/")
+        self.local_models = [str(m) for m in (local.get("models") or ["qwen2.5:3b", "llama3.2:3b"])]
+        self.local_timeout = float(local.get("request_timeout_seconds", 300))
+        self.time_budget = float(local.get("max_seconds_per_run", 900))
+        hosted = cfg.get("hosted") or {}
+        self.hosted_endpoint = str(hosted.get("endpoint") or "")
+        self.hosted_models = [str(m) for m in (hosted.get("models") or [])]
+        self.hosted_key = str(env.get(str(hosted.get("api_key_env") or "AI_API_KEY"), "") or "")
+        self.max_tokens = int(hosted.get("max_tokens", 1500))
+        self.calls_left = int(cfg.get("max_calls_per_run", 40))
+        self.backend = ""          # "local" or "hosted", picked on first use
+        self.model = ""
         self.stats = {"llm": 0, "heuristic": 0}
-        self.disabled_reason = ""
+        self.disabled_reason = "provider set to none" if self.provider == "none" else ""
         self.problem = ""          # last unusable reply, shown in the run's source health
-        self.catalog_note = ""     # why the model catalog couldn't be used, if it couldn't
+        self.setup_note = ""       # why the local model couldn't be used, if it couldn't
         self.bad_replies = 0
-        self._catalog_checked = False
+        self._started = time.monotonic()
         self._params: dict[str, dict[str, Any]] = {}  # per-model request options, adapted on 400s
-        if self.provider == "none":
-            self.disabled_reason = "provider set to none"
-        elif not self.token:
-            self.disabled_reason = "no GITHUB_TOKEN (runs outside GitHub Actions use the keyword summarizer)"
-        host = re.sub(r"^https?://([^/]+).*$", r"\1", self.endpoint)
-        # the free tier allows ~15 requests/minute
-        http.min_interval.setdefault(host, float(gm.get("min_interval_seconds", 4.5)))
+        if self.hosted_endpoint:
+            host = urlsplit(self.hosted_endpoint).netloc
+            http.min_interval.setdefault(host, float(hosted.get("min_interval_seconds", 4)))
 
     @property
     def llm_enabled(self) -> bool:
         return not self.disabled_reason and self.calls_left > 0
+
+    @property
+    def label(self) -> str:
+        if self.backend == "local":
+            return f"local AI on the runner ({self.model})"
+        if self.backend == "hosted":
+            return f"hosted AI ({self.model})"
+        return "AI"
 
     def summarize(self, title: str, text: str, source: str, kind: str = "post") -> dict[str, Any]:
         result = self.summarize_ai(title, text, source, kind)
@@ -229,6 +246,7 @@ class Summarizer:
 
     def summarize_ai(self, title: str, text: str, source: str, kind: str = "post") -> dict[str, Any] | None:
         """AI summary, or None when AI isn't available for this item."""
+        self._choose_backend()
         if not self.llm_enabled:
             return None
         try:
@@ -240,56 +258,114 @@ class Summarizer:
             self.stats["llm"] += 1
         return result
 
-    # ---- GitHub Models ------------------------------------------------------------
+    # ---- picking a backend --------------------------------------------------------
 
-    def _headers(self) -> dict[str, str]:
-        return {"Authorization": f"Bearer {self.token}", "Accept": "application/vnd.github+json",
-                "X-GitHub-Api-Version": "2022-11-28"}
-
-    def _resolve_models(self) -> None:
-        """Keep the configured models GitHub currently offers. If none are offered any more
-        (models get retired), fall back to the catalog's most generous free-tier chat models."""
-        if self._catalog_checked:
+    def _choose_backend(self) -> None:
+        if self.backend or self.disabled_reason:
             return
-        self._catalog_checked = True
+        if self.provider in ("auto", "local"):
+            available = self._local_available()
+            if available:
+                wanted = [m for m in self.local_models if any(_same_model(m, a) for a in available)]
+                self.model = wanted[0] if wanted else available[0]
+                self.backend = "local"
+                return
+        if self.provider in ("auto", "hosted") and self.hosted_endpoint and self.hosted_key and self.hosted_models:
+            self.backend, self.model = "hosted", self.hosted_models[0]
+            return
+        reasons = []
+        if self.provider in ("auto", "local"):
+            reasons.append(f"no local model running ({self.setup_note or 'not started'})")
+        if self.provider in ("auto", "hosted"):
+            reasons.append("hosted AI not configured" if not self.hosted_endpoint else "hosted AI key not set")
+        self.disabled_reason = "; ".join(reasons)
+
+    def _local_available(self) -> list[str]:
         try:
-            catalog = self.http.get_json(self.catalog_url, headers=self._headers(), ttl=86400)
-        except HttpError as exc:
-            if exc.status in (401, 403):
-                raise LLMUnavailable("GitHub Models refused the token (workflow needs "
-                                     "`permissions: models: read`)") from exc
-            self.catalog_note = f"model catalog unusable ({exc.reason[:80]})"
-            return  # catalog unreachable: try the configured list as is
-        rows = catalog if isinstance(catalog, list) else (catalog.get("models") or catalog.get("data") or [])
-        offered = {str(m["id"]).lower(): m for m in rows if isinstance(m, dict) and m.get("id")}
-        if not offered:
-            return
-        keep = [m for m in self.models if m.lower() in offered]
-        if not keep:
-            def chat_model(m: dict) -> bool:
-                outputs = [str(x).lower() for x in (m.get("supported_output_modalities") or ["text"])]
-                return "text" in outputs and "embed" not in str(m.get("id", "")).lower()
-            tier = {"low": 0, "high": 1}
-            ranked = sorted((m for m in offered.values() if chat_model(m)),
-                            key=lambda m: (tier.get(str(m.get("rate_limit_tier", "")).lower(), 2), str(m["id"])))
-            keep = [str(m["id"]) for m in ranked[:3]]
-        if keep:
-            self.models = keep
+            resp = self.http.session.get(f"{self.local_url}/api/tags", timeout=5)
+            names = [m.get("name") or m.get("model") for m in (resp.json().get("models") or [])]
+        except (requests.RequestException, ValueError, AttributeError) as exc:
+            self.setup_note = f"{self.local_url} unreachable: {type(exc).__name__}"
+            return []
+        names = [str(n) for n in names if n]
+        if not names:
+            self.setup_note = "Ollama is running but has no model pulled"
+        return names
 
-    def _complete(self, model: str, messages: list[dict]) -> dict:
-        """One chat completion. If the model rejects an option (temperature, max_tokens,
-        response_format), drop or rename it and retry once per option."""
+    # ---- calls --------------------------------------------------------------------
+
+    def _llm(self, title: str, text: str, source: str, kind: str) -> dict[str, Any] | None:
+        if self.backend == "local" and time.monotonic() - self._started > self.time_budget:
+            raise LLMUnavailable(f"local AI time budget ({self.time_budget:.0f}s) used up for this run; "
+                                 "the rest get AI summaries on a later run")
+        what = {"docs": "Official documentation change (diff of added/removed lines)",
+                "page_change": "Change to an official help page (diff of added/removed lines)",
+                "release_notes": "Release notes post"}.get(kind, "Post")
+        limit = 5000 if self.backend == "local" else 12000  # small CPU model: keep prompts short
+        prompt = (f"Source: {source}\nType: {what}\nTitle: {title}\n\nContent:\n"
+                  f"{truncate(text or '(no body text available)', limit)}")
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": prompt}]
+        if self.backend == "local":
+            return self._parse(self._complete_local(messages), self.model, title, text, kind)
+        while self.hosted_models:
+            model = self.hosted_models[0]
+            try:
+                body = self._complete_hosted(model, messages)
+            except HttpError as exc:
+                message = str(exc).lower()
+                if exc.status == 404 or (exc.status in (400, 422) and "model" in message and any(
+                        w in message for w in ("unknown", "not found", "unavailable", "invalid", "unsupported"))):
+                    self.hosted_models.pop(0)  # model not offered -> try the next one
+                    continue
+                if exc.status in (400, 413, 422):
+                    self.problem = f"{model} rejected one post ({exc.reason})"
+                    return None  # this post only (e.g. content filter); keyword summary instead
+                if exc.status in (401, 403):
+                    raise LLMUnavailable(f"hosted AI refused the API key ({exc.reason})") from exc
+                if exc.status == 429:
+                    raise LLMUnavailable("hosted AI free quota reached for now") from exc
+                raise LLMUnavailable(f"hosted AI unavailable: {exc.reason}") from exc
+            self.model = model
+            result = self._parse(body, model, title, text, kind)
+            if result is None and self._ran_out_of_tokens(body, model):
+                continue  # retried with a bigger output budget
+            return result
+        raise LLMUnavailable("none of the configured hosted models are available")
+
+    def _complete_local(self, messages: list[dict]) -> dict:
+        """Ollama's native chat API: JSON-constrained output, bigger context than the default."""
+        if self.calls_left <= 0:
+            raise LLMUnavailable("per-run AI call budget used up")
+        self.calls_left -= 1
+        payload = {"model": self.model, "messages": messages, "stream": False, "format": "json",
+                   "options": {"temperature": 0.2, "num_ctx": 8192, "num_predict": 600}}
+        try:
+            resp = self.http.post_json(f"{self.local_url}/api/chat", payload, retry_statuses={500, 502, 503},
+                                       timeout=self.local_timeout)
+        except HttpError as exc:
+            raise LLMUnavailable(f"local model failed: {exc.reason}") from exc
+        try:
+            data = resp.json()
+        except ValueError:
+            return {"_raw": resp.text[:200], "_http": f"HTTP {resp.status_code}"}
+        message = data.get("message") or {}
+        return {"model": data.get("model"), "choices": [
+            {"message": {"content": message.get("content", "")}, "finish_reason": data.get("done_reason")}]}
+
+    def _complete_hosted(self, model: str, messages: list[dict]) -> dict:
+        """One OpenAI-compatible chat completion. If the model rejects an option (temperature,
+        max_tokens, response_format), drop or rename it and retry once per option."""
         params = self._params.setdefault(model, {"temperature": 0.2, "max_tokens": self.max_tokens,
                                                  "response_format": {"type": "json_object"}})
-        redirects = 0
-        for _ in range(6):
+        headers = {"Authorization": f"Bearer {self.hosted_key}", "Accept": "application/json"}
+        for _ in range(4):
             if self.calls_left <= 0:
                 raise LLMUnavailable("per-run AI call budget used up")
             self.calls_left -= 1
             try:
                 # no silent redirects: a redirected POST turns into a GET and returns the wrong thing
-                resp = self.http.post_json(self.endpoint, {"model": model, "messages": messages, **params},
-                                           headers=self._headers(), retry_statuses={500, 502, 503, 504},
+                resp = self.http.post_json(self.hosted_endpoint, {"model": model, "messages": messages, **params},
+                                           headers=headers, retry_statuses={500, 502, 503, 504},
                                            allow_redirects=False)
             except HttpError as exc:
                 msg = str(exc).lower()
@@ -304,58 +380,15 @@ class Summarizer:
                         params["max_completion_tokens"] = params.pop("max_tokens")
                         continue
                 raise
-            location = resp.headers.get("Location")
-            if 300 <= resp.status_code < 400 and location and redirects < 2:
-                target = urljoin(self.endpoint, location)
-                host = urlsplit(target).hostname or ""
-                trusted = host == urlsplit(self.endpoint).hostname or host.endswith((".github.ai", ".github.com"))
-                if urlsplit(target).scheme == "https" and trusted:
-                    redirects += 1
-                    self.calls_left += 1  # a redirect isn't a model call
-                    self.endpoint = target  # POST again (keeping the method) and remember it for this run
-                    continue
             http = f"HTTP {resp.status_code}, content-type {resp.headers.get('Content-Type')!r}"
             if 300 <= resp.status_code < 400:
-                http += f", redirect to {location!r}"
+                http += f", redirect to {resp.headers.get('Location')!r}"
             try:
                 body = resp.json()
             except ValueError:
                 return {"_raw": resp.text[:200], "_http": http}
             return body if isinstance(body, dict) else {"_raw": str(body)[:200], "_http": http}
         raise LLMUnavailable(f"{model} rejected every request variant")
-
-    def _llm(self, title: str, text: str, source: str, kind: str) -> dict[str, Any] | None:
-        self._resolve_models()
-        what = {"docs": "Official documentation change (diff of added/removed lines)",
-                "page_change": "Change to an official help page (diff of added/removed lines)",
-                "release_notes": "Release notes post"}.get(kind, "Post")
-        prompt = (f"Source: {source}\nType: {what}\nTitle: {title}\n\nContent:\n"
-                  f"{truncate(text or '(no body text available)', 12000)}")
-        messages = [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": prompt}]
-        while self.models:
-            model = self.models[0]
-            try:
-                body = self._complete(model, messages)
-            except HttpError as exc:
-                message = str(exc).lower()
-                if exc.status == 404 or (exc.status in (400, 422) and "model" in message and any(
-                        w in message for w in ("unknown", "not found", "unavailable", "invalid", "unsupported"))):
-                    self.models.pop(0)  # model not in the catalog -> try the next one
-                    continue
-                if exc.status in (400, 413, 422):
-                    self.problem = f"{model} rejected one post ({exc.reason})"
-                    return None  # this post only (e.g. content filter); keyword summary instead
-                if exc.status in (401, 403):
-                    raise LLMUnavailable("GitHub Models refused the token (workflow needs "
-                                         "`permissions: models: read`)") from exc
-                if exc.status == 429:
-                    raise LLMUnavailable("GitHub Models free quota reached for now") from exc
-                raise LLMUnavailable(f"GitHub Models unavailable: {exc.reason}") from exc
-            result = self._parse(body, model, title, text, kind)
-            if result is None and self._ran_out_of_tokens(body, model):
-                continue  # retried below with a bigger output budget
-            return result
-        raise LLMUnavailable("none of the configured GitHub Models are available")
 
     def _ran_out_of_tokens(self, body: dict, model: str) -> bool:
         """Reasoning models can spend the whole output budget thinking: allow one bigger retry."""
@@ -379,7 +412,7 @@ class Summarizer:
 
     def _parse(self, body: dict, model: str, title: str, text: str, kind: str) -> dict[str, Any] | None:
         content = self._content(body)
-        method = f"github-models:{model}"
+        method = f"{self.backend}:{model}"
         data = _extract_json(content) if content else None
         if data and str(data.get("summary", "")).strip():
             self.bad_replies = 0
@@ -403,11 +436,15 @@ class Summarizer:
                   f"content={content[:80]!r}")
         if "_raw" in body:
             detail += f", raw={body['_raw'][:80]!r}, {body.get('_http', '')}"
-        usage = body.get("usage") or {}
-        if usage:
-            detail += f", tokens out={usage.get('completion_tokens')}"
         self.bad_replies += 1
         self.problem = f"{model} replied without a usable summary ({detail})"
         if self.bad_replies >= self.MAX_BAD_REPLIES:
             self.disabled_reason = f"stopped after {self.bad_replies} unusable replies; last: {self.problem}"
         return None
+
+
+def _same_model(wanted: str, available: str) -> bool:
+    """'llama3.2' matches 'llama3.2:latest'; 'qwen2.5:3b' matches only itself."""
+    if ":" in wanted:
+        return wanted == available
+    return available.split(":")[0] == wanted

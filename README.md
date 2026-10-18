@@ -74,16 +74,24 @@ If the "Commit history" step fails with a permission error, go to **Settings** �
 
 ### AI summaries (free, nothing to set up)
 
-Platform posts are summarized with **GitHub Models**, GitHub's free AI tier. The workflow uses its
-built-in token, with `permissions: models: read`. There is no account, key or bill.
+Platform posts are summarized by a **small open AI model that runs on the GitHub Actions machine
+itself**. The workflow installs [Ollama](https://ollama.com) and downloads the model
+(`qwen2.5:3b`, with `llama3.2:3b` as a backup). There is no account, API key or bill, and no outside
+AI service that could change its terms. Public repos get unlimited Actions minutes. This adds a
+couple of minutes to each run.
 
-* The preferred models in `config/settings.yml` are checked against GitHub's live model catalog on
-  each run. Retired ones are skipped, and if none are left, the most generous free-tier chat model in
-  the catalog is used.
-* If AI summaries are unavailable (quota used up, an outage, or replies that can't be used), the run
-  falls back to a built-in keyword summarizer. The source-health section says why, including what
-  the model actually sent back.
-* The next run that has AI again upgrades the last 14 days of keyword summaries in place.
+* A small model on a CPU is slower and plainer than a big hosted one, so AI time per run is capped
+  (15 minutes by default). Anything over the cap gets a keyword summary today and an AI summary on
+  the next run.
+* If the model can't start, or its replies can't be used, the run falls back to a built-in keyword
+  summarizer. The source-health section says why. The next run that has AI again upgrades the last
+  14 days of keyword summaries in place.
+* **Optional, better quality:** point `summarizer.hosted` in `config/settings.yml` at any
+  OpenAI-compatible chat API you have a key for (several providers have free tiers, which can change),
+  and add the key as a repo secret named `AI_API_KEY`. With `provider: auto`, the local model still
+  goes first.
+* History: this project first used GitHub Models, GitHub's free AI tier, but GitHub retired it on
+  July 30, 2026. It now only returns a placeholder page, which is why summaries run locally.
 
 To turn AI off, set `summarizer.provider: none` in `config/settings.yml`.
 
@@ -171,7 +179,7 @@ health; and suggestions. Every chart has a table view, and it works in light and
 | Newsroom | `about.roblox.com/newsroom` (Roblox's official blog) | Feed autodiscovery → links on the page → `sitemap.xml` |
 | Creator Docs | `github.com/Roblox/creator-docs` (the official source of create.roblox.com/docs) | Diffs of monetization/DevEx, discovery/promotion and publishing/policy pages; formatting-only edits are ignored |
 | DevEx FAQ | Help Center article 203314100 (Zendesk API) | HTML fallback; reports when its text changes |
-| Summaries | GitHub Models (`models.github.ai`) | Keyword summarizer fallback |
+| Summaries | Local open model via Ollama on the runner; optional hosted API | Keyword summarizer fallback; later upgrade |
 
 All of these are public endpoints that don't need a login. Nothing behind a login is scraped.
 
@@ -216,8 +224,8 @@ DISCORD_WEBHOOK_URL=... python -m roblox_intel discord-test   # check the webhoo
 python -m roblox_intel report --discord-json    # print the latest report + Discord payload
 ```
 
-Locally there's no GitHub token, so summaries use the keyword summarizer. To try AI summaries,
-export `GITHUB_TOKEN` (a token with `models: read`).
+Summaries use the keyword summarizer locally unless you run [Ollama](https://ollama.com) yourself
+(`ollama pull qwen2.5:3b`). The summarizer picks it up automatically at `http://127.0.0.1:11434`.
 
 ## Settings
 
@@ -233,7 +241,7 @@ config/            settings.yml, developers.yml       <- the two files you edit
 roblox_intel/      the pipeline (python -m roblox_intel ...)
   roblox.py        Roblox API wrappers            trends.py      snapshot + growth analysis
   developers.py    watch list, releases, updates  platform.py    official sources monitor
-  summarize.py     GitHub Models + keyword rubric report.py      daily report
+  summarize.py     local/hosted AI + keyword rubric report.py   daily report
   discord.py       webhook message                dashboard.py   static site data
   http.py          throttle / retry / cache       storage.py     JSON history
 site/              dashboard (plain HTML/CSS/JS, no build step, no CDN)
@@ -254,7 +262,7 @@ pytest
 ```
 
 The end-to-end test runs the real CLI for 10 simulated days against local stand-ins for every
-service (Roblox APIs, DevForum, Newsroom, Help Center, GitHub Models, Discord) and a local git repo
+service (Roblox APIs, DevForum, Newsroom, Help Center, the local AI model, Discord) and a local git repo
 for the docs. It covers growth windows, new releases, update impact, outages and fallbacks, Discord
 limits and the dashboard. Its data is synthetic and lives only in a temp folder.
 

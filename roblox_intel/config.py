@@ -69,13 +69,19 @@ DEFAULTS: dict[str, Any] = {
     },
     "summarizer": {
         "provider": "auto",
-        "github_models": {
-            "endpoint": "https://models.github.ai/inference/chat/completions",
-            "catalog": "https://models.github.ai/catalog/models",
-            "models": ["openai/gpt-4.1-mini", "openai/gpt-4o-mini", "openai/gpt-5-mini", "microsoft/phi-4"],
+        "max_calls_per_run": 40,
+        "local": {
+            "url": "http://127.0.0.1:11434",
+            "models": ["qwen2.5:3b", "llama3.2:3b"],
+            "max_seconds_per_run": 900,
+            "request_timeout_seconds": 300,
+        },
+        "hosted": {
+            "endpoint": "",
+            "models": [],
+            "api_key_env": "AI_API_KEY",
             "max_tokens": 1500,
-            "max_calls_per_run": 25,
-            "min_interval_seconds": 4.5,
+            "min_interval_seconds": 4,
         },
     },
     "discord": {

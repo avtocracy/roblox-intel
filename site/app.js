@@ -691,7 +691,7 @@
           el("span", { text: i.source_label }), ...(i.tags || []).map((t) => el("span", { class: "tag", text: t }))),
         el("a", { class: "title", href: i.url, text: i.title }),
         el("p", { class: "summary", text: i.summary }),
-        el("div", { class: "muted small", text: [i.why ? `Why: ${i.why}` : "", i.method && i.method.startsWith("github-models") ? "AI summary" : "keyword summary"].filter(Boolean).join(" · ") })))));
+        el("div", { class: "muted small", text: [i.why ? `Why: ${i.why}` : "", i.method && i.method !== "keywords" ? "AI summary" : "keyword summary"].filter(Boolean).join(" · ") })))));
     if (!shown.length) log.append(el("li", { class: "muted" }, el("span", { class: "when" }), el("span", { text: "Nothing matches these filters in this range." })));
   }
 

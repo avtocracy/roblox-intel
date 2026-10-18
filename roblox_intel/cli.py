@@ -157,15 +157,18 @@ def cmd_check_sources(args: argparse.Namespace) -> int:
         probe(f"Platform: {src.get('label', src['id'])}", fetch)
 
     summarizer = Summarizer(settings, http)
-    if summarizer.llm_enabled:
-        def llm():
+    summarizer._choose_backend()
+    if summarizer.backend == "local":
+        rows.append(("OK", "Summaries: local AI (Ollama)", f"model {summarizer.model} ready on the runner"))
+    elif summarizer.backend == "hosted":
+        def hosted():
             method = summarizer.summarize("Test", "Roblox announced a test post for creators.", "check-sources")["method"]
-            if not method.startswith("github-models"):
-                raise RuntimeError(f"fell back to keywords: {summarizer.disabled_reason}")
+            if method == "keywords":
+                raise RuntimeError(f"fell back to keywords: {summarizer.disabled_reason or summarizer.problem}")
             return method, None
-        probe("Summaries: GitHub Models", llm)
+        probe("Summaries: hosted AI", hosted)
     else:
-        rows.append(("SKIP", "Summaries: GitHub Models", summarizer.disabled_reason))
+        rows.append(("SKIP", "Summaries: AI", f"keyword summaries only ({summarizer.disabled_reason})"))
     hook = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
     if hook:
         ok = bool(discord.WEBHOOK_RE.match(hook.split("?")[0]))

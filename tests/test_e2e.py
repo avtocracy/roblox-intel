@@ -71,11 +71,8 @@ def env(tmp_path, monkeypatch):
                 {"id": "devex-faq", "label": "DevEx FAQ", "type": "zendesk_article",
                  "base_url": f"{base}/help", "article_id": 203314100},
             ]},
-            "summarizer": {"provider": "github", "github_models": {
-                "endpoint": f"{base}/models/inference/chat/completions",
-                "catalog": f"{base}/models/catalog/models",
-                "models": ["openai/missing-model", "openai/gpt-4.1-mini"], "max_calls_per_run": 25,
-                "min_interval_seconds": 0}},
+            "summarizer": {"provider": "auto", "local": {"url": f"{base}/ollama", "models": ["qwen2.5:3b"],
+                                                         "max_seconds_per_run": 600}},
             "dashboard": {"output_dir": str(tmp_path / "site"), "top_games": 20, "history_days": 180},
         }
         (tmp_path / "settings.yml").write_text(yaml.safe_dump(settings, allow_unicode=True), encoding="utf-8")
@@ -88,8 +85,7 @@ def env(tmp_path, monkeypatch):
         monkeypatch.setenv("RI_SETTINGS", str(tmp_path / "settings.yml"))
         monkeypatch.setenv("RI_DEVELOPERS", str(tmp_path / "developers.yml"))
         monkeypatch.setenv("RI_DATA_DIR", str(tmp_path / "data"))
-        monkeypatch.setenv("GITHUB_TOKEN", "test-token")
-        monkeypatch.delenv("GITHUB_MODELS_TOKEN", raising=False)
+        monkeypatch.delenv("AI_API_KEY", raising=False)
         monkeypatch.setenv("DISCORD_WEBHOOK_URL", f"{base}/discord/api/webhooks/123/abc")
         monkeypatch.setattr(discord, "WEBHOOK_RE", re.compile(r"^http://127\.0\.0\.1:\d+/discord/api/webhooks/\d+/\w+$"))
         yield {"mock": mock, "data": tmp_path / "data", "site": tmp_path / "site", "repo": repo}
@@ -143,8 +139,7 @@ def test_ten_days_end_to_end(env):
     assert len(docs) == 1 and docs[0]["kind"] == "docs" and "Developer Exchange" in docs[0]["title"]
     assert not [p for p in platform.values() if p["source"] == "devex-faq"], "first run only saves a baseline"
     assert platform["devforum-announcements:9001"]["importance"] == "high"
-    assert platform["devforum-announcements:9001"]["method"] == "github-models:openai/gpt-4.1-mini", \
-        "a model missing from GitHub's catalog is skipped"
+    assert platform["devforum-announcements:9001"]["method"] == "local:qwen2.5:3b"
     assert not any("text" in p for p in platform.values()), "raw text is only kept for keyword summaries"
     assert len(sc.discord_payloads) == 1
     first = sc.discord_payloads[0]
@@ -257,7 +252,7 @@ def test_ai_outage_then_upgrade(env):
     health = {h["id"]: h for h in load(data / "health.json")["sources"]}
     assert health["summarizer"]["status"] == "warn"
     assert "stopped after 3 unusable replies" in health["summarizer"]["detail"]
-    assert "finish_reason='stop'" in health["summarizer"]["detail"] and "mock-reasoner" in health["summarizer"]["detail"]
+    assert "finish_reason='stop'" in health["summarizer"]["detail"] and "content=''" in health["summarizer"]["detail"]
     items = load(data / "platform.json")
     assert items and all(i["method"] == "keywords" for i in items)
     calls_day0 = sc.llm_calls
@@ -269,9 +264,9 @@ def test_ai_outage_then_upgrade(env):
     items = {i["id"]: i for i in load(data / "platform.json")}
     for item_id in ("devforum-announcements:9001", "devforum-release-notes:9101",
                     "roblox-newsroom:creator-earnings-update"):
-        assert items[item_id]["method"].startswith("github-models"), f"{item_id} re-fetched and upgraded"
+        assert items[item_id]["method"] == "local:qwen2.5:3b", f"{item_id} re-fetched and upgraded"
     docs = [i for i in items.values() if i["source"] == "creator-docs"]
-    assert docs and all(i["method"].startswith("github-models") for i in docs), "stored text upgraded"
+    assert docs and all(i["method"] == "local:qwen2.5:3b" for i in docs), "stored text upgraded"
     assert not any("text" in i for i in items.values()), "text dropped once upgraded"
     health = {h["id"]: h for h in load(data / "health.json")["sources"]}
     assert health["summarizer"]["status"] == "ok" and "upgraded" in health["summarizer"]["detail"]

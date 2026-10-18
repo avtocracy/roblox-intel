@@ -30,6 +30,7 @@ class Scenario:
         self.requests: list[str] = []
         self.fail_paths: set[str] = set()  # paths that should return 503
         self.llm_mode = "json"  # json | empty (unusable reply)
+        self.ollama_models = ["qwen2.5:3b"]
 
     # universe id -> static info
     GAMES = {
@@ -236,12 +237,9 @@ class Handler(BaseHTTPRequestHandler):
         # Help center
         if path == "/help/api/v2/help_center/en-us/articles/203314100.json":
             return self._send(200, sc.help_article())
-        # GitHub Models catalog
-        if path == "/models/catalog/models":
-            return self._send(200, [{"id": "openai/gpt-4.1-mini", "rate_limit_tier": "low",
-                                     "supported_output_modalities": ["text"]},
-                                    {"id": "openai/text-embedding-3-small", "rate_limit_tier": "low",
-                                     "supported_output_modalities": ["embeddings"]}])
+        # Ollama (local AI on the runner)
+        if path == "/ollama/api/tags":
+            return self._send(200, {"models": [{"name": n} for n in sc.ollama_models]})
         return self._send(404, {"errors": [f"no route for {path}"]})
 
     def do_POST(self) -> None:
@@ -252,22 +250,19 @@ class Handler(BaseHTTPRequestHandler):
         if self.path.startswith("/discord/api/webhooks/"):
             sc.discord_payloads.append(body)
             return self._send(204)
-        if self.path == "/models/inference/chat/completions":
+        if self.path == "/ollama/api/chat":
             sc.llm_calls += 1
-            if self.headers.get("Authorization") != "Bearer test-token":
-                return self._send(401, {"error": "bad token"})
-            if body.get("model") == "openai/missing-model":
-                return self._send(404, {"error": {"code": "unknown_model", "message": "Unknown model"}})
-            if sc.llm_mode == "empty":  # e.g. a model that spends its whole answer budget elsewhere
-                return self._send(200, {"model": "mock-reasoner", "choices": [
-                    {"finish_reason": "stop", "message": {"role": "assistant", "content": ""}}]})
+            assert body.get("format") == "json" and body["options"]["num_ctx"] >= 4096
+            if sc.llm_mode == "empty":
+                return self._send(200, {"model": body["model"], "message": {"role": "assistant", "content": ""},
+                                        "done": True, "done_reason": "stop"})
             prompt = body["messages"][-1]["content"]
             level = "high" if re.search(r"devex|algorithm|payout", prompt, re.I) else "low"
             title = re.search(r"Title: (.*)", prompt).group(1)
             content = json.dumps({"summary": f"AI summary of {title}. Two sentences here.",
                                   "importance": level, "why": "test rubric", "tags": ["devex"]})
-            return self._send(200, {"choices": [{"finish_reason": "stop",
-                                                 "message": {"role": "assistant", "content": content}}]})
+            return self._send(200, {"model": body["model"], "message": {"role": "assistant", "content": content},
+                                    "done": True, "done_reason": "stop"})
         return self._send(404, {"errors": ["no route"]})
 
 

@@ -578,9 +578,9 @@ def run(ctx: Context, summarizer: Summarizer | None = None) -> list[dict]:
     store.save_platform_items(log + new_records)
     store.save_state("platform", state)
     stats = summarizer.stats
-    note = "; ".join(x for x in (summarizer.disabled_reason or summarizer.problem, summarizer.catalog_note) if x)
+    note = summarizer.disabled_reason or summarizer.problem
     if stats["llm"]:
-        ctx.health.ok("summarizer", "Summaries (GitHub Models, free tier)",
+        ctx.health.ok("summarizer", f"Summaries ({summarizer.label})",
                       f"{stats['llm']} AI summaries ({upgraded} upgraded from earlier keyword summaries), "
                       f"{stats['heuristic']} keyword summaries" + (f"; note: {note}" if note else ""))
     elif stats["heuristic"] or note:
