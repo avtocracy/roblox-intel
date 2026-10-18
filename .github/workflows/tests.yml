@@ -1,0 +1,23 @@
+name: Tests
+
+on:
+  push:
+    paths: ["roblox_intel/**", "tests/**", "site/**", "config/**", "requirements*.txt"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q

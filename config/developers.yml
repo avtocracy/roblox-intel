@@ -1,0 +1,77 @@
+# Developers and studios that Roblox Intel tracks.
+#
+# Add one entry per developer, in any of three ways:
+#
+#   - game: https://www.roblox.com/games/2753915549/Blox-Fruits
+#     expect: Blox Fruits      # optional safety check on the game's name
+#       -> tracks whoever owns that game (group or user), looked up automatically.
+#
+#   - group: 1234567           # from roblox.com/communities/1234567/...
+#     name: Some Studio        # optional label for reports
+#
+#   - user: 7654321            # from roblox.com/users/7654321/profile
+#     name: Some Developer
+#
+# To stop tracking someone, delete their entry. History already collected stays
+# in data/. Run `python -m roblox_intel suggest-developers` to list the owners of
+# today's top games that you are not tracking yet, as entries ready to paste here.
+#
+# The defaults below point at the studios behind the biggest current games.
+# Owners are looked up from each game link on every run (and re-checked weekly),
+# so acquisitions and transfers are picked up. If a link stops matching its
+# `expect` name, the entry is skipped and flagged in the run's source-health
+# report instead of tracking the wrong studio.
+
+developers:
+  - game: https://www.roblox.com/games/126884695634066
+    expect: Grow a Garden
+  - game: https://www.roblox.com/games/109983668079237
+    expect: Steal a Brainrot
+  - game: https://www.roblox.com/games/79546208627805
+    expect: 99 Nights in the Forest
+  - game: https://www.roblox.com/games/2753915549
+    expect: Blox Fruits
+  - game: https://www.roblox.com/games/4924922222
+    expect: Brookhaven
+  - game: https://www.roblox.com/games/920587237
+    expect: Adopt Me
+  - game: https://www.roblox.com/games/142823291
+    expect: Murder Mystery 2
+  - game: https://www.roblox.com/games/15101393044
+    expect: Dress To Impress
+  - game: https://www.roblox.com/games/16732694052
+    expect: Fisch
+  - game: https://www.roblox.com/games/116495829188952
+    expect: Dead Rails
+  - game: https://www.roblox.com/games/10449761463
+    expect: Strongest Battlegrounds
+  - game: https://www.roblox.com/games/17625359962
+    expect: Rivals
+  - game: https://www.roblox.com/games/13772394625
+    expect: Blade Ball
+  - game: https://www.roblox.com/games/8737899170
+    expect: Pet Simulator 99
+  - game: https://www.roblox.com/games/85896571713843
+    expect: Bubble Gum Simulator
+  - game: https://www.roblox.com/games/1537690962
+    expect: Bee Swarm Simulator
+  - game: https://www.roblox.com/games/6516141723
+    expect: Doors
+  - game: https://www.roblox.com/games/3260590327
+    expect: Tower Defense Simulator
+  - game: https://www.roblox.com/games/606849621
+    expect: Jailbreak
+  - game: https://www.roblox.com/games/286090429
+    expect: Arsenal
+  - game: https://www.roblox.com/games/2788229376
+    expect: Da Hood
+  - game: https://www.roblox.com/games/735030788
+    expect: Royale High
+  - game: https://www.roblox.com/games/185655149
+    expect: Bloxburg
+  - game: https://www.roblox.com/games/6872265039
+    expect: BedWars
+  - game: https://www.roblox.com/games/15532962292
+    expect: Sol's RNG
+  - game: https://www.roblox.com/games/1962086868
+    expect: Tower of Hell

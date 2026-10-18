@@ -1,0 +1,88 @@
+name: Daily Roblox Intel
+
+on:
+  schedule:
+    - cron: "17 14 * * *"   # every day at 14:17 UTC; edit to taste (cron is always UTC)
+  workflow_dispatch:         # "Run workflow" button for manual runs
+
+permissions:
+  contents: write    # commit the day's data/ to the repo
+  pages: write       # publish the dashboard
+  id-token: write    # required by actions/deploy-pages
+  models: read       # free AI summaries through GitHub Models
+
+concurrency:
+  group: roblox-intel
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      site: ${{ steps.site.outputs.uploaded }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Restore HTTP cache
+        uses: actions/cache@v6
+        with:
+          path: .cache/http
+          key: http-cache-${{ github.run_id }}
+          restore-keys: http-cache-
+
+      - name: Check data sources
+        run: python -m roblox_intel check-sources
+        continue-on-error: true   # a failing source is reported, not fatal
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Collect, analyze, send Discord brief, build dashboard
+        run: python -m roblox_intel run
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Commit history
+        if: ${{ !cancelled() }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then echo "No data changes."; exit 0; fi
+          git commit -q -m "data: daily snapshot $(date -u +%F)"
+          for attempt in 1 2 3 4; do
+            git pull -q --rebase && git push -q && exit 0
+            sleep $((attempt * 5))
+          done
+          exit 1
+
+      - name: Upload dashboard
+        if: ${{ !cancelled() && hashFiles('_site/index.html') != '' }}
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+      - name: Mark dashboard ready
+        id: site
+        if: ${{ !cancelled() && hashFiles('_site/index.html') != '' }}
+        run: echo "uploaded=true" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: collect
+    if: ${{ !cancelled() && needs.collect.outputs.site == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

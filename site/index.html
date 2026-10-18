@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roblox Intel</title>
+  <meta name="description" content="Daily Roblox market intelligence: player trends, genre momentum, studio moves and platform changes.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='4' width='24' height='24' rx='5' transform='rotate(12 16 16)' fill='%232a78d6'/%3E%3Crect x='12' y='12' width='8' height='8' fill='%23fcfcfb' transform='rotate(12 16 16)'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <h1>Roblox Intel</h1>
+          <p class="muted" id="updated">Loading…</p>
+        </div>
+      </div>
+      <button type="button" class="ghost" id="theme-toggle" aria-label="Color theme: auto">◐ Auto</button>
+    </div>
+  </header>
+
+  <main class="wrap" id="app">
+    <div class="filters" role="group" aria-label="Filters">
+      <div class="segmented" role="radiogroup" aria-label="Growth window" id="window-filter">
+        <span class="seg-label">Growth window</span>
+        <button type="button" role="radio" data-value="24h">24h</button>
+        <button type="button" role="radio" data-value="7d">7d</button>
+        <button type="button" role="radio" data-value="30d">30d</button>
+      </div>
+      <div class="segmented" role="radiogroup" aria-label="Chart range" id="range-filter">
+        <span class="seg-label">Chart range</span>
+        <button type="button" role="radio" data-value="30">30 days</button>
+        <button type="button" role="radio" data-value="90">90 days</button>
+        <button type="button" role="radio" data-value="180">180 days</button>
+      </div>
+    </div>
+
+    <div id="notice" class="notice" hidden></div>
+
+    <section class="kpis" id="kpis" aria-label="Key numbers"></section>
+
+    <section class="card" id="brief-card" aria-labelledby="brief-title">
+      <div class="card-head"><h2 id="brief-title">Today's brief</h2><span class="muted" id="brief-date"></span></div>
+      <div class="brief-grid">
+        <div><h3>Trend highlights</h3><ol id="brief-trends" class="brief-list"></ol><p class="muted small" id="brief-note"></p></div>
+        <div><h3>Developer moves</h3><ul id="brief-devs" class="brief-list"></ul></div>
+        <div><h3>Platform changes</h3><ul id="brief-platform" class="brief-list"></ul></div>
+      </div>
+    </section>
+
+    <section class="card" id="players-card" aria-labelledby="players-title">
+      <div class="card-head">
+        <h2 id="players-title">Player trends</h2>
+        <div class="card-tools">
+          <div class="segmented small" role="radiogroup" aria-label="Scale" id="players-mode">
+            <button type="button" role="radio" data-value="abs">Players</button>
+            <button type="button" role="radio" data-value="index">Indexed</button>
+          </div>
+          <button type="button" class="ghost small" data-table-toggle="players-chart">Table view</button>
+        </div>
+      </div>
+      <p class="muted small" id="players-sub">Concurrent players at each daily snapshot. Tick games in the table to plot them (up to 6).</p>
+      <div class="chart" id="players-chart"></div>
+      <div class="table-wrap"><table class="data" id="games-table"></table></div>
+    </section>
+
+    <section class="card" id="movers-card" aria-labelledby="movers-title">
+      <div class="card-head">
+        <h2 id="movers-title">Fastest-growing games</h2>
+        <div class="segmented small" role="radiogroup" aria-label="Movers list" id="movers-kind">
+          <button type="button" role="radio" data-value="gainers">Growth %</button>
+          <button type="button" role="radio" data-value="abs_gainers">Most players added</button>
+          <button type="button" role="radio" data-value="losers">Declining</button>
+        </div>
+      </div>
+      <p class="muted small" id="movers-sub"></p>
+      <div class="table-wrap"><table class="data" id="movers-table"></table></div>
+    </section>
+
+    <section class="card" id="breakouts-card" aria-labelledby="breakouts-title">
+      <div class="card-head"><h2 id="breakouts-title">New breakouts</h2></div>
+      <p class="muted small" id="breakouts-sub">Games created in the last 60 days that already draw a crowd.</p>
+      <div class="table-wrap"><table class="data" id="breakouts-table"></table></div>
+    </section>
+
+    <section class="card" id="genres-card" aria-labelledby="genres-title">
+      <div class="card-head">
+        <h2 id="genres-title">Genre trends</h2>
+        <div class="card-tools">
+          <div class="segmented small" role="radiogroup" aria-label="Scale" id="genres-mode">
+            <button type="button" role="radio" data-value="abs">Players</button>
+            <button type="button" role="radio" data-value="index">Indexed</button>
+          </div>
+          <button type="button" class="ghost small" data-table-toggle="genres-chart">Table view</button>
+        </div>
+      </div>
+      <div class="genre-grid">
+        <div>
+          <h3 id="momentum-title">Momentum</h3>
+          <p class="muted small" id="momentum-sub"></p>
+          <div class="chart" id="momentum-chart"></div>
+        </div>
+        <div>
+          <h3>Players by genre over time</h3>
+          <p class="muted small">Total concurrent players across tracked games. Tick genres below to plot them.</p>
+          <div class="chart" id="genres-chart"></div>
+        </div>
+      </div>
+      <div class="table-wrap"><table class="data" id="genres-table"></table></div>
+    </section>
+
+    <section class="card" id="devs-card" aria-labelledby="devs-title">
+      <div class="card-head"><h2 id="devs-title">Tracked developers</h2></div>
+      <div class="table-wrap"><table class="data" id="devs-table"></table></div>
+      <h3 class="section-gap">Developer moves</h3>
+      <div class="chips" id="event-filter" role="group" aria-label="Filter developer moves"></div>
+      <ul class="log" id="events-log"></ul>
+    </section>
+
+    <section class="card" id="platform-card" aria-labelledby="platform-title">
+      <div class="card-head"><h2 id="platform-title">Platform changes</h2></div>
+      <div class="filters inline">
+        <div class="chips" id="importance-filter" role="group" aria-label="Importance"></div>
+        <label class="select">Source
+          <select id="source-filter"></select>
+        </label>
+      </div>
+      <ul class="log" id="platform-log"></ul>
+    </section>
+
+    <div class="two-col">
+      <section class="card" id="health-card" aria-labelledby="health-title">
+        <div class="card-head"><h2 id="health-title">Data sources</h2><span class="muted small" id="health-date"></span></div>
+        <ul class="health" id="health-list"></ul>
+      </section>
+      <section class="card" id="suggest-card" aria-labelledby="suggest-title">
+        <div class="card-head"><h2 id="suggest-title">Studios you might add</h2>
+          <button type="button" class="ghost small" id="copy-suggest">Copy</button></div>
+        <p class="muted small">Owners of today's biggest games that aren't in <code>config/developers.yml</code> yet.</p>
+        <pre class="code" id="suggest-yaml"></pre>
+      </section>
+    </div>
+  </main>
+
+  <footer class="wrap footer muted small">
+    Public data only: Roblox web APIs (Charts, game stats, creator game lists), the Roblox DevForum,
+    the Roblox Newsroom, Roblox's open-source Creator Docs and the DevEx help article.
+    Collected once a day by GitHub Actions. Player counts are a single daily snapshot, so compare like with like.
+  </footer>
+
+  <div class="tooltip" id="tooltip" role="status" aria-live="polite" hidden></div>
+  <script src="app.js" defer></script>
+</body>
+</html>

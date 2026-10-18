@@ -1,0 +1,120 @@
+# Roblox Intel settings.
+# Every key is optional: anything you delete falls back to the default in
+# roblox_intel/config.py. The tracked developer list lives in developers.yml.
+
+report:
+  # Link shown in Discord. Leave empty to auto-detect the GitHub Pages URL
+  # (https://<owner>.github.io/<repo>/) when running in GitHub Actions.
+  dashboard_url: ""
+
+http:
+  # Sent with every request so Roblox can identify the traffic.
+  user_agent: "RobloxIntel/1.0 (personal market-intel tool; daily, low volume)"
+  timeout_seconds: 30
+  max_retries: 5               # retries on 429 / 5xx / timeouts
+  connect_retries: 2           # retries when a host can't be reached at all (DNS, refused)
+  backoff_base_seconds: 2      # exponential: 2s, 4s, 8s, 16s, 32s (+ jitter)
+  max_backoff_seconds: 90
+  breaker_threshold: 3         # after 3 failed requests in a row, skip that host for the rest of the run
+  cache_dir: .cache/http
+  cache_ttl_seconds: 21600     # re-running on the same day reuses responses for 6h
+  min_interval_seconds:        # minimum gap between two requests to the same host
+    default: 1.0
+    devforum.roblox.com: 2.0
+    about.roblox.com: 2.0
+    en.help.roblox.com: 2.0
+
+trends:
+  charts:
+    device: computer
+    country: all
+    max_sorts: 40              # how many Charts sorts to read per run
+    max_pages_per_sort: 2
+    extra_params: {}           # extra query params for explore-api if Roblox ever requires them
+  keep_tracking_days: 30       # keep refreshing a game this long after it leaves the charts
+  min_ccu_for_growth: 1000     # ignore small games in growth rankings (noise)
+  min_base_ccu: 100            # ...and games whose starting point was tiny
+  new_game_days: 60            # "new game" = universe created within this many days
+  breakout_min_ccu: 1000       # a new game counts as a breakout above this many players
+  top_n: 10                    # rows per ranking in the report / dashboard
+  exclude_sponsored: true      # ignore paid ad slots in the charts
+
+developers:
+  max_games_per_developer: 100
+  min_visits_to_track: 1000    # skip tiny test places from a developer's game list
+  report_update_min_ccu: 500   # only call out updates to games with at least this many players
+  new_game_min_ccu: 100        # a new game is announced once it has this many players (or 1,000+ visits)
+  big_move_pct: 25             # % player change over 7 days that counts as a notable move
+  big_move_min_ccu: 1000
+  recent_release_days: 30      # on the first run, still report releases newer than this
+  resolve_refresh_days: 7      # re-check who owns each linked game every N days
+
+platform:
+  first_run_lookback_days: 14  # the first run only summarizes posts this recent
+  max_new_items_per_source: 25 # safety cap per source per run
+  sources:
+    - id: devforum-announcements
+      label: "DevForum · Announcements"
+      type: discourse
+      base_url: https://devforum.roblox.com
+      category: updates/announcements
+      category_id: 36
+    - id: devforum-release-notes
+      label: "DevForum · Release Notes"
+      type: discourse
+      base_url: https://devforum.roblox.com
+      category: updates/release-notes
+      # If the category can't be resolved, read the parent "updates" category
+      # and keep only topics whose title matches this pattern.
+      fallback_category: updates
+      title_filter: "^Release Notes"
+    - id: roblox-newsroom
+      label: "Roblox Newsroom (official blog)"
+      type: newsroom
+      base_url: https://about.roblox.com
+      path: /newsroom
+    - id: creator-docs
+      label: "Creator Docs (official docs repo)"
+      type: git_docs
+      repo_url: https://github.com/Roblox/creator-docs
+      areas:
+        Monetization & DevEx:
+          - content/en-us/production/monetization
+          - content/en-us/creator-rewards.md
+        Discovery & promotion:
+          - content/en-us/discovery.md
+          - content/en-us/discovery-faq.md
+          - content/en-us/production/promotion
+          - content/en-us/creator-programs
+        Publishing & policy:
+          - content/en-us/production/publishing
+          - content/en-us/marketplace/marketplace-policy.md
+          - content/en-us/marketplace/marketplace-fees-and-commissions.md
+          - content/en-us/safety.md
+    - id: devex-faq
+      label: "DevEx FAQ (Help Center)"
+      type: zendesk_article
+      base_url: https://en.help.roblox.com
+      article_id: 203314100
+
+summarizer:
+  # auto  = use GitHub Models (free, built into GitHub Actions) when a token is
+  #         available, otherwise a built-in keyword summarizer.
+  # github = always try GitHub Models.  none = keyword summarizer only.
+  provider: auto
+  github_models:
+    endpoint: https://models.github.ai/inference/chat/completions
+    models: [openai/gpt-4.1-mini, openai/gpt-4o-mini]   # tried in order
+    max_calls_per_run: 25      # stays well inside the free daily quota
+
+discord:
+  username: Roblox Intel
+  max_trend_items: 5
+  max_developer_items: 5
+  max_platform_items: 5
+  platform_min_importance: high   # high | medium | low
+
+dashboard:
+  output_dir: _site
+  top_games: 20                # games drawn in the player-trend chart
+  history_days: 180            # how far back charts and logs go
