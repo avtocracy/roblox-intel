@@ -1,0 +1,38 @@
+{
+"dashboard_url":"https://avtocracy.github.io/roblox-intel/",
+"date":"2026-10-19",
+"developer_moves":[
+{"developer":"Mentole Studios","score":89.1,"text":"Trading Tycoon changed owner: Trading Tycoon → Mentole Studios · 3.4k playing","type":"ownership_change","universe_id":10767912502},
+{"developer":"Da Hood Entertainment","score":48.9,"text":"Da Hood Entertainment renamed Da Hood → 🎃 Da Hood","type":"renamed","universe_id":1008451066},
+{"developer":"Uplift Games","score":46.5,"text":"Uplift Games updated [🎃] Adopt Me! · 238k playing","type":"game_updated","universe_id":383310974},
+{"developer":"Sol's Studio","score":43.1,"text":"Sol's Studio updated Sol's RNG [ Radiant Forest🌙] · 33k playing","type":"game_updated","universe_id":5361032378},
+{"developer":"The Garden Game","score":41.9,"text":"The Garden Game updated [🎃] Grow a Garden 🌶️ · 17.2k playing","type":"game_updated","universe_id":7436755782}
+],
+"developer_moves_total":7,
+"generated_at":"2026-10-19T19:55:23+00:00",
+"health":[
+{"detail":"26 developers from 26 entries","fallback":"","id":"developers-config","label":"Tracked developer list (config/developers.yml)","status":"ok"},
+{"detail":"90 games across 26 developers","fallback":"","id":"developer-games","label":"Developer game lists (games.roblox.com v2)","status":"ok"},
+{"detail":"26 sorts, 902 games","fallback":"","id":"charts","label":"Roblox Charts (explore-api)","status":"ok"},
+{"detail":"1027 of 1027 games","fallback":"","id":"games-api","label":"Game stats (games.roblox.com)","status":"ok"},
+{"detail":"1027 games","fallback":"","id":"votes-api","label":"Likes/dislikes (games.roblox.com)","status":"ok"},
+{"detail":"150 new icons","fallback":"","id":"icons-api","label":"Game icons (thumbnails.roblox.com)","status":"ok"},
+{"detail":"1 new","fallback":"","id":"platform:devforum-announcements","label":"DevForum · Announcements","status":"ok"},
+{"detail":"0 new","fallback":"","id":"platform:devforum-release-notes","label":"DevForum · Release Notes","status":"ok"},
+{"detail":"330 articles linked from the newsroom page; 0 new","fallback":"","id":"platform:roblox-newsroom","label":"Roblox Newsroom (official blog)","status":"ok"},
+{"detail":"0 new commits, 0 meaningful changes; 0 new","fallback":"","id":"platform:creator-docs","label":"Creator Docs (official docs repo)","status":"ok"},
+{"detail":"help center API; unchanged; 0 new","fallback":"","id":"platform:devex-faq","label":"DevEx FAQ (Help Center)","status":"ok"},
+{"detail":"1 AI summaries (0 upgraded from earlier keyword summaries), 0 keyword summaries","fallback":"","id":"summarizer","label":"Summaries (local AI on the runner (qwen2.5:3b))","status":"ok"},
+{"detail":"daily message sent","fallback":"","id":"discord","label":"Discord webhook","status":"ok"}
+],
+"highlights":[
+{"kind":"gainer_24h","priority":100,"text":"[**\\[🎃\\] Anime Dimensions Simulator**](https://www.roblox.com/games/6938803436) +113% players in 24h (530 → 1.1k) · RPG","universe_id":2655311011},
+{"kind":"breakout","priority":94,"text":"New breakout: [**Break and Steal an Egg**](https://www.roblox.com/games/114326934417838) (Simulation, 44 days old) · 71.4k playing, ~4.3M visits/day","universe_id":10765288803},
+{"kind":"abs_gainer_24h","priority":75,"text":"[**\\[💀\\] Steal a Brainrot**](https://www.roblox.com/games/109983668079237) added the most players in 24h: +12.6k (now 137k)","universe_id":7709344486},
+{"kind":"breakout","priority":74,"text":"New breakout: [**\\[🎃\\] Huss Valley**](https://www.roblox.com/games/107535308163741) (Action, 49 days old) · 57.5k playing, ~3.3M visits/day","universe_id":10764627709},
+{"kind":"gainer_24h","priority":70,"text":"[**Crazy Diver**](https://www.roblox.com/games/93756155297797) +92% players in 24h (5.3k → 10.2k) · Simulation","universe_id":10767840473}
+],
+"history_days":2,
+"history_note":"Growth comparisons unlock as history builds: 7d from Oct 25, 30d from Nov 17.",
+"platform":{"counts":{"high":0,"low":0,"medium":1},"featured":[]}
+}
