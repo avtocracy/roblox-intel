@@ -1,0 +1,37 @@
+{
+"dashboard_url":"https://avtocracy.github.io/roblox-intel/",
+"date":"2026-10-21",
+"developer_moves":[
+{"developer":"RCM Games","score":51.7,"text":"RCM Games renamed Dead Rails → [👻EVENT] Dead Rails ","type":"renamed","universe_id":7018190066},
+{"developer":"Uplift Games","score":45.6,"text":"Uplift Games updated [🎃] Adopt Me! · 138k playing","type":"game_updated","universe_id":383310974},
+{"developer":"RCM Games","score":41.7,"text":"RCM Games updated [👻EVENT] Dead Rails  · 14.9k playing","type":"game_updated","universe_id":7018190066},
+{"developer":"Rumble Studios","score":38.0,"text":"Rumble Studios updated Bubble Gum Simulator · 1.8k playing","type":"game_updated","universe_id":892043755}
+],
+"developer_moves_total":4,
+"generated_at":"2026-10-21T18:38:30+00:00",
+"health":[
+{"detail":"26 developers from 26 entries","fallback":"","id":"developers-config","label":"Tracked developer list (config/developers.yml)","status":"ok"},
+{"detail":"90 games across 26 developers","fallback":"","id":"developer-games","label":"Developer game lists (games.roblox.com v2)","status":"ok"},
+{"detail":"26 sorts, 886 games","fallback":"","id":"charts","label":"Roblox Charts (explore-api)","status":"ok"},
+{"detail":"1094 of 1095 games","fallback":"","id":"games-api","label":"Game stats (games.roblox.com)","status":"ok"},
+{"detail":"1093 games","fallback":"","id":"votes-api","label":"Likes/dislikes (games.roblox.com)","status":"ok"},
+{"detail":"45 new icons","fallback":"","id":"icons-api","label":"Game icons (thumbnails.roblox.com)","status":"ok"},
+{"detail":"1 new","fallback":"","id":"platform:devforum-announcements","label":"DevForum · Announcements","status":"ok"},
+{"detail":"0 new","fallback":"","id":"platform:devforum-release-notes","label":"DevForum · Release Notes","status":"ok"},
+{"detail":"331 articles linked from the newsroom page; 1 new","fallback":"","id":"platform:roblox-newsroom","label":"Roblox Newsroom (official blog)","status":"ok"},
+{"detail":"2 new commits, 1 meaningful changes; 1 new","fallback":"","id":"platform:creator-docs","label":"Creator Docs (official docs repo)","status":"ok"},
+{"detail":"help center API; unchanged; 0 new","fallback":"","id":"platform:devex-faq","label":"DevEx FAQ (Help Center)","status":"ok"},
+{"detail":"3 AI summaries (0 upgraded from earlier keyword summaries), 0 keyword summaries","fallback":"","id":"summarizer","label":"Summaries (local AI on the runner (qwen2.5:3b))","status":"ok"},
+{"detail":"daily message sent","fallback":"","id":"discord","label":"Discord webhook","status":"ok"}
+],
+"highlights":[
+{"kind":"gainer_24h","priority":100,"text":"[**easiest game ever!**](https://www.roblox.com/games/16057679366) +373% players in 24h (440 → 2.1k) · Puzzle","universe_id":5550530788},
+{"kind":"breakout","priority":94,"text":"New breakout: [**Break and Steal an Egg**](https://www.roblox.com/games/114326934417838) (Simulation, 46 days old) · 69.6k playing, ~4.5M visits/day","universe_id":10765288803},
+{"kind":"genre_up","priority":88,"text":"Genre **Unclassified** +33% players over 24h (33.7k → 44.7k across 26 games)","universe_id":null},
+{"kind":"abs_gainer_24h","priority":75,"text":"[**Murder Mystery 2**](https://www.roblox.com/games/142823291) added the most players in 24h: +83.6k (now 716k)","universe_id":66654135},
+{"kind":"breakout","priority":74,"text":"New breakout: [**صيد الضبّان**](https://www.roblox.com/games/82347957379349) (Simulation, 18 days old) · 54.5k playing, ~891k visits/day","universe_id":10769149947}
+],
+"history_days":4,
+"history_note":"Growth comparisons unlock as history builds: 7d from Oct 25, 30d from Nov 17.",
+"platform":{"counts":{"high":1,"low":1,"medium":1},"featured":[{"importance":"high","source_label":"Creator Docs (official docs repo)","summary":"Added information about Roblox Plus subscribers getting access to paid private servers at no cost and earning up to 100 Robux per subscriber per month based on server time spent.","title":"Monetization & DevEx docs updated: Private servers","url":"https://github.com/Roblox/creator-docs/compare/d99df2ea0ed1...65621e8cb925","why":"Changes money and eligibility for a significant portion of the user base."}]}
+}
