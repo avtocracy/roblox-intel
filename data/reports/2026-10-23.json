@@ -1,0 +1,38 @@
+{
+"dashboard_url":"https://avtocracy.github.io/roblox-intel/",
+"date":"2026-10-23",
+"developer_moves":[
+{"developer":"dead game smth","score":88.7,"text":"Anime Ball Duels changed owner: King Games TD → dead game smth · 2.7k playing","type":"ownership_change","universe_id":10764989090},
+{"developer":"The Deep Shore","score":88.1,"text":"Last Stand [FIX🔧] changed owner: Gordrow → The Deep Shore · 1.9k playing","type":"ownership_change","universe_id":10769802973},
+{"developer":"LSPLASH","score":55.5,"text":"LSPLASH renamed DOORS 🚨 → DOORS 🍬🍭","type":"renamed","universe_id":2440500124},
+{"developer":"Paradoxum Games","score":52.9,"text":"Paradoxum Games renamed [🌙 NIGHT 2] Tower Defense Simulator → [🌙 NIGHT 3] Tower Defense Simulator","type":"renamed","universe_id":1176784616},
+{"developer":"Easy.gg","score":52.2,"text":"Easy.gg renamed BedWars [🎃HALLOWEEN PT.1] → 🎃 BedWars [⌛4H]","type":"renamed","universe_id":2619619496}
+],
+"developer_moves_total":13,
+"generated_at":"2026-10-23T18:20:35+00:00",
+"health":[
+{"detail":"26 developers from 26 entries","fallback":"","id":"developers-config","label":"Tracked developer list (config/developers.yml)","status":"ok"},
+{"detail":"90 games across 26 developers","fallback":"","id":"developer-games","label":"Developer game lists (games.roblox.com v2)","status":"ok"},
+{"detail":"26 sorts, 891 games","fallback":"","id":"charts","label":"Roblox Charts (explore-api)","status":"ok"},
+{"detail":"1149 of 1154 games","fallback":"","id":"games-api","label":"Game stats (games.roblox.com)","status":"ok"},
+{"detail":"1148 games","fallback":"","id":"votes-api","label":"Likes/dislikes (games.roblox.com)","status":"ok"},
+{"detail":"31 new icons","fallback":"","id":"icons-api","label":"Game icons (thumbnails.roblox.com)","status":"ok"},
+{"detail":"2 new","fallback":"","id":"platform:devforum-announcements","label":"DevForum · Announcements","status":"ok"},
+{"detail":"0 new","fallback":"","id":"platform:devforum-release-notes","label":"DevForum · Release Notes","status":"ok"},
+{"detail":"331 articles linked from the newsroom page; 0 new","fallback":"","id":"platform:roblox-newsroom","label":"Roblox Newsroom (official blog)","status":"ok"},
+{"detail":"2 new commits, 0 meaningful changes, 1 formatting-only edits ignored; 0 new","fallback":"","id":"platform:creator-docs","label":"Creator Docs (official docs repo)","status":"ok"},
+{"detail":"help center API; unchanged; 0 new","fallback":"","id":"platform:devex-faq","label":"DevEx FAQ (Help Center)","status":"ok"},
+{"detail":"2 AI summaries (0 upgraded from earlier keyword summaries), 0 keyword summaries","fallback":"","id":"summarizer","label":"Summaries (local AI on the runner (qwen2.5:3b))","status":"ok"},
+{"detail":"daily message sent","fallback":"","id":"discord","label":"Discord webhook","status":"ok"}
+],
+"highlights":[
+{"kind":"gainer_24h","priority":100,"text":"[**A Long Flight \\[EARLY ACCESS\\]**](https://www.roblox.com/games/129631837832236) +514% players in 24h (1.8k → 11k) · Survival","universe_id":10768785226},
+{"kind":"breakout","priority":94,"text":"New breakout: [**The Hollow**](https://www.roblox.com/games/116463962153167) (Entertainment, 10 days old) · 167k playing, ~3.2M visits/day","universe_id":10770728771},
+{"kind":"genre_up","priority":88,"text":"Genre **Survival** +56% players over 24h (1.4M → 2.2M across 69 games)","universe_id":null},
+{"kind":"abs_gainer_24h","priority":75,"text":"[**Murder Mystery 2**](https://www.roblox.com/games/142823291) added the most players in 24h: +482k (now 1.1M)","universe_id":66654135},
+{"kind":"breakout","priority":74,"text":"New breakout: [**Break and Steal an Egg**](https://www.roblox.com/games/114326934417838) (Simulation, 48 days old) · 67.1k playing, ~4.7M visits/day","universe_id":10765288803}
+],
+"history_days":6,
+"history_note":"Growth comparisons unlock as history builds: 7d from Oct 25, 30d from Nov 17.",
+"platform":{"counts":{"high":0,"low":0,"medium":2},"featured":[]}
+}
