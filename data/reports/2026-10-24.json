@@ -1,0 +1,38 @@
+{
+"dashboard_url":"https://avtocracy.github.io/roblox-intel/",
+"date":"2026-10-24",
+"developer_moves":[
+{"developer":"Dress To Impress Group","score":56.3,"text":"Dress To Impress Group renamed [🎃] Dress To Impress → [🎃 NEW QUEST] Dress To Impress","type":"renamed","universe_id":5203828273},
+{"developer":"Fisching","score":55.5,"text":"Fisching renamed Fisch 🎃 [FISCHFRIGHT] → Fisch 👻 [HORSEMAN]","type":"renamed","universe_id":5750914919},
+{"developer":"BIG Games Pets","score":54.9,"text":"BIG Games Pets renamed 💎 [DIAMOND] Pet Simulator 99! 💎 → 🎉 [PSX] Pet Simulator 99! 🐾","type":"renamed","universe_id":3317771874},
+{"developer":"Easy.gg","score":53.4,"text":"Easy.gg renamed 🎃 BedWars [⌛4H] → [🎃PART 2] BedWars","type":"renamed","universe_id":2619619496},
+{"developer":"Uplift Games","score":47.0,"text":"Uplift Games updated [🎃] Adopt Me! · 317k playing","type":"game_updated","universe_id":383310974}
+],
+"developer_moves_total":11,
+"generated_at":"2026-10-24T17:27:28+00:00",
+"health":[
+{"detail":"26 developers from 26 entries","fallback":"","id":"developers-config","label":"Tracked developer list (config/developers.yml)","status":"ok"},
+{"detail":"90 games across 26 developers","fallback":"","id":"developer-games","label":"Developer game lists (games.roblox.com v2)","status":"ok"},
+{"detail":"26 sorts, 903 games","fallback":"","id":"charts","label":"Roblox Charts (explore-api)","status":"ok"},
+{"detail":"1186 of 1193 games","fallback":"","id":"games-api","label":"Game stats (games.roblox.com)","status":"ok"},
+{"detail":"1185 games","fallback":"","id":"votes-api","label":"Likes/dislikes (games.roblox.com)","status":"ok"},
+{"detail":"39 new icons","fallback":"","id":"icons-api","label":"Game icons (thumbnails.roblox.com)","status":"ok"},
+{"detail":"2 new","fallback":"","id":"platform:devforum-announcements","label":"DevForum · Announcements","status":"ok"},
+{"detail":"0 new","fallback":"","id":"platform:devforum-release-notes","label":"DevForum · Release Notes","status":"ok"},
+{"detail":"331 articles linked from the newsroom page; 0 new","fallback":"","id":"platform:roblox-newsroom","label":"Roblox Newsroom (official blog)","status":"ok"},
+{"detail":"1 new commits, 1 meaningful changes; 1 new","fallback":"","id":"platform:creator-docs","label":"Creator Docs (official docs repo)","status":"ok"},
+{"detail":"help center API; unchanged; 0 new","fallback":"","id":"platform:devex-faq","label":"DevEx FAQ (Help Center)","status":"ok"},
+{"detail":"3 AI summaries (0 upgraded from earlier keyword summaries), 0 keyword summaries","fallback":"","id":"summarizer","label":"Summaries (local AI on the runner (qwen2.5:3b))","status":"ok"},
+{"detail":"daily message sent","fallback":"","id":"discord","label":"Discord webhook","status":"ok"}
+],
+"highlights":[
+{"kind":"gainer_24h","priority":100,"text":"[**99 Nights in the Forest 🔦**](https://www.roblox.com/games/79546208627805) +786% players in 24h (216k → 1.9M) · Survival","universe_id":7326934954},
+{"kind":"breakout","priority":94,"text":"New breakout: [**\\[NEW STAGES\\]  DONT SPLASH 🎃**](https://www.roblox.com/games/119958473240233) (Obby & Platformer, 7 days old) · 87.2k playing, ~3M visits/day","universe_id":10771421858},
+{"kind":"genre_up","priority":88,"text":"Genre **Survival** +114% players over 24h (2.3M → 4.8M across 73 games)","universe_id":null},
+{"kind":"breakout","priority":74,"text":"New breakout: [**🎃 Sell Fries! \\[Anomaly\\] 🍟**](https://www.roblox.com/games/94891079210424) (Survival, 33 days old) · 76.8k playing, ~1.9M visits/day","universe_id":10767380385},
+{"kind":"gainer_24h","priority":70,"text":"[**\\[🎃\\] Blue Lock Farm**](https://www.roblox.com/games/132767904294856) +545% players in 24h (9.2k → 59.3k) · Simulation","universe_id":10700618962}
+],
+"history_days":7,
+"history_note":"Growth comparisons unlock as history builds: 7d from Oct 25, 30d from Nov 17.",
+"platform":{"counts":{"high":0,"low":0,"medium":3},"featured":[]}
+}
