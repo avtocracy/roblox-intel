@@ -1,0 +1,32 @@
+{
+"dashboard_url":"https://avtocracy.github.io/roblox-intel/",
+"date":"2026-10-27",
+"developer_moves":[{"developer":"Bacon Theory","score":94.9,"text":"[NEW STAGES]  DONT SPLASH changed owner: slo7th → Bacon Theory · 94.5k playing","type":"ownership_change","universe_id":10771421858},{"developer":"Uplift Games","score":46.3,"text":"Uplift Games updated [🎃] Adopt Me! · 207k playing","type":"game_updated","universe_id":383310974}],
+"developer_moves_total":2,
+"generated_at":"2026-10-27T19:27:34+00:00",
+"health":[
+{"detail":"26 developers from 26 entries","fallback":"","id":"developers-config","label":"Tracked developer list (config/developers.yml)","status":"ok"},
+{"detail":"90 games across 26 developers","fallback":"","id":"developer-games","label":"Developer game lists (games.roblox.com v2)","status":"ok"},
+{"detail":"26 sorts, 910 games","fallback":"","id":"charts","label":"Roblox Charts (explore-api)","status":"ok"},
+{"detail":"1271 of 1280 games","fallback":"","id":"games-api","label":"Game stats (games.roblox.com)","status":"ok"},
+{"detail":"1270 games","fallback":"","id":"votes-api","label":"Likes/dislikes (games.roblox.com)","status":"ok"},
+{"detail":"36 new icons","fallback":"","id":"icons-api","label":"Game icons (thumbnails.roblox.com)","status":"ok"},
+{"detail":"1 new","fallback":"","id":"platform:devforum-announcements","label":"DevForum · Announcements","status":"ok"},
+{"detail":"1 new","fallback":"","id":"platform:devforum-release-notes","label":"DevForum · Release Notes","status":"ok"},
+{"detail":"331 articles linked from the newsroom page; 0 new","fallback":"","id":"platform:roblox-newsroom","label":"Roblox Newsroom (official blog)","status":"ok"},
+{"detail":"1 new commits, 0 meaningful changes; 0 new","fallback":"","id":"platform:creator-docs","label":"Creator Docs (official docs repo)","status":"ok"},
+{"detail":"help center API; unchanged; 0 new","fallback":"","id":"platform:devex-faq","label":"DevEx FAQ (Help Center)","status":"ok"},
+{"detail":"2 AI summaries (0 upgraded from earlier keyword summaries), 0 keyword summaries","fallback":"","id":"summarizer","label":"Summaries (local AI on the runner (qwen2.5:3b))","status":"ok"},
+{"detail":"daily message sent","fallback":"","id":"discord","label":"Discord webhook","status":"ok"}
+],
+"highlights":[
+{"kind":"gainer_24h","priority":100,"text":"[**Prism Runway Show💎**](https://www.roblox.com/games/118447215156914) +182% players in 24h (1.9k → 5.4k) · Roleplay & Avatar Sim","universe_id":8156973419},
+{"kind":"gainer_7d","priority":96,"text":"[**\\[NEW STAGES\\]  DONT SPLASH**](https://www.roblox.com/games/119958473240233) +1,561% players in 7d (5.7k → 94.5k) · Obby & Platformer","universe_id":10771421858},
+{"kind":"genre_up","priority":88,"text":"Genre **Education** +90% players over 7d (1.1k → 2.1k across 6 games)","universe_id":null},
+{"kind":"abs_gainer_24h","priority":75,"text":"[**Murder Mystery 2**](https://www.roblox.com/games/142823291) added the most players in 24h: +140k (now 450k)","universe_id":66654135},
+{"kind":"breakout","priority":74,"text":"New breakout: [**Break and Steal an Egg**](https://www.roblox.com/games/114326934417838) (Simulation, 52 days old) · 63.2k playing, ~5.2M visits/day","universe_id":10765288803}
+],
+"history_days":10,
+"history_note":"Growth comparisons unlock as history builds: 30d from Nov 17.",
+"platform":{"counts":{"high":0,"low":1,"medium":1},"featured":[]}
+}
