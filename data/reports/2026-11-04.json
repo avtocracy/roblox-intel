@@ -1,0 +1,38 @@
+{
+"dashboard_url":"https://avtocracy.github.io/roblox-intel/",
+"date":"2026-11-04",
+"developer_moves":[
+{"developer":"WaikickDev","score":89.2,"text":"🎃 Word Game [🇷🇺] changed owner: Kakashik007123 → WaikickDev · 3.5k playing","type":"ownership_change","universe_id":10766954651},
+{"developer":"BIG Games Pets","score":82.2,"text":"BIG Games Pets: players down 33% in a week (79.2k → 52.8k across 6 games)","type":"player_drop","universe_id":null},
+{"developer":"Rumble Studios","score":46.9,"text":"Rumble Studios renamed [🎃2X] Bubble Gum Simulator → [🎃] Bubble Gum Simulator","type":"renamed","universe_id":892043755},
+{"developer":"Uplift Games","score":45.9,"text":"Uplift Games updated [🎃] Adopt Me! · 164k playing","type":"game_updated","universe_id":383310974},
+{"developer":"BIG Games Pets","score":43.9,"text":"BIG Games Pets updated 🎃 [MINIGAMES] Pet Simulator 99! 👻 · 51.8k playing","type":"game_updated","universe_id":3317771874}
+],
+"developer_moves_total":8,
+"generated_at":"2026-11-04T20:49:35+00:00",
+"health":[
+{"detail":"26 developers from 26 entries","fallback":"","id":"developers-config","label":"Tracked developer list (config/developers.yml)","status":"ok"},
+{"detail":"90 games across 26 developers","fallback":"","id":"developer-games","label":"Developer game lists (games.roblox.com v2)","status":"ok"},
+{"detail":"26 sorts, 917 games","fallback":"","id":"charts","label":"Roblox Charts (explore-api)","status":"ok"},
+{"detail":"1494 of 1511 games","fallback":"","id":"games-api","label":"Game stats (games.roblox.com)","status":"ok"},
+{"detail":"1493 games","fallback":"","id":"votes-api","label":"Likes/dislikes (games.roblox.com)","status":"ok"},
+{"detail":"27 new icons","fallback":"","id":"icons-api","label":"Game icons (thumbnails.roblox.com)","status":"ok"},
+{"detail":"3 new","fallback":"","id":"platform:devforum-announcements","label":"DevForum · Announcements","status":"ok"},
+{"detail":"0 new","fallback":"","id":"platform:devforum-release-notes","label":"DevForum · Release Notes","status":"ok"},
+{"detail":"331 articles linked from the newsroom page; 0 new","fallback":"","id":"platform:roblox-newsroom","label":"Roblox Newsroom (official blog)","status":"ok"},
+{"detail":"3 new commits, 3 meaningful changes; 3 new","fallback":"","id":"platform:creator-docs","label":"Creator Docs (official docs repo)","status":"ok"},
+{"detail":"help center API; unchanged; 0 new","fallback":"","id":"platform:devex-faq","label":"DevEx FAQ (Help Center)","status":"ok"},
+{"detail":"6 AI summaries (0 upgraded from earlier keyword summaries), 0 keyword summaries","fallback":"","id":"summarizer","label":"Summaries (local AI on the runner (qwen2.5:3b))","status":"ok"},
+{"detail":"daily message sent","fallback":"","id":"discord","label":"Discord webhook","status":"ok"}
+],
+"highlights":[
+{"kind":"gainer_24h","priority":100,"text":"[**sesh**](https://www.roblox.com/games/124027312895188) +792% players in 24h (208 → 1.9k) · Sports & Racing","universe_id":7557272025},
+{"kind":"gainer_7d","priority":96,"text":"[**ARISE CROSSOVER \\[🎃HALLOWEEN\\]**](https://www.roblox.com/games/87039211657390) +407% players in 7d (739 → 3.7k) · Simulation","universe_id":7074860883},
+{"kind":"breakout","priority":94,"text":"New breakout: [**\\[🎃\\] Throw Food For Animals**](https://www.roblox.com/games/120219252362013) (Simulation, 47 days old) · 79.2k playing, ~1.2M visits/day","universe_id":10766972131},
+{"kind":"genre_up","priority":88,"text":"Genre **RPG** +12% players over 7d (333k → 373k across 78 games)","universe_id":null},
+{"kind":"breakout","priority":74,"text":"New breakout: [**Break and Steal an Egg**](https://www.roblox.com/games/114326934417838) (Simulation, 60 days old) · 76.8k playing, ~5.8M visits/day","universe_id":10765288803}
+],
+"history_days":18,
+"history_note":"Growth comparisons unlock as history builds: 30d from Nov 17.",
+"platform":{"counts":{"high":1,"low":2,"medium":3},"featured":[{"importance":"high","source_label":"Creator Docs (official docs repo)","summary":"Updated DevEx Portal documentation with details on creating an account, selecting payment methods, and submitting tax information. Tax information is now managed separately in Creator Hub.","title":"Monetization & DevEx docs updated: DevEx Portal, DevEx tax information","url":"https://github.com/Roblox/creator-docs/compare/c8f527670394...34177296e52e","why":"changes devex, monetization rules: \"If you are a U.S. person, you must provide information through the Taxes page in Creator Hub to…\""}]}
+}
