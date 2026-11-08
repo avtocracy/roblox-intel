@@ -1,0 +1,31 @@
+{
+"dashboard_url":"https://avtocracy.github.io/roblox-intel/",
+"date":"2026-11-08",
+"developer_moves":[{"developer":"Rumble Studios","score":51.0,"text":"Rumble Studios renamed [🎃] Bubble Gum Simulator INFINITY → [❄️] Bubble Gum Simulator INFINITY","type":"renamed","universe_id":6504986360},{"developer":"Rumble Studios","score":41.0,"text":"Rumble Studios updated [❄️] Bubble Gum Simulator INFINITY · 10.1k playing","type":"game_updated","universe_id":6504986360},{"developer":"Rumble Studios","score":38.7,"text":"Rumble Studios updated [❄️] Bubble Gum Simulator · 2.6k playing","type":"game_updated","universe_id":892043755}],
+"developer_moves_total":3,
+"generated_at":"2026-11-08T18:51:24+00:00",
+"health":[
+{"detail":"26 developers from 26 entries","fallback":"","id":"developers-config","label":"Tracked developer list (config/developers.yml)","status":"ok"},
+{"detail":"90 games across 26 developers","fallback":"","id":"developer-games","label":"Developer game lists (games.roblox.com v2)","status":"ok"},
+{"detail":"26 sorts, 942 games","fallback":"","id":"charts","label":"Roblox Charts (explore-api)","status":"ok"},
+{"detail":"1588 of 1612 games","fallback":"","id":"games-api","label":"Game stats (games.roblox.com)","status":"ok"},
+{"detail":"1587 games","fallback":"","id":"votes-api","label":"Likes/dislikes (games.roblox.com)","status":"ok"},
+{"detail":"30 new icons","fallback":"","id":"icons-api","label":"Game icons (thumbnails.roblox.com)","status":"ok"},
+{"detail":"0 new","fallback":"","id":"platform:devforum-announcements","label":"DevForum · Announcements","status":"ok"},
+{"detail":"0 new","fallback":"","id":"platform:devforum-release-notes","label":"DevForum · Release Notes","status":"ok"},
+{"detail":"331 articles linked from the newsroom page; 0 new","fallback":"","id":"platform:roblox-newsroom","label":"Roblox Newsroom (official blog)","status":"ok"},
+{"detail":"0 new commits, 0 meaningful changes; 0 new","fallback":"","id":"platform:creator-docs","label":"Creator Docs (official docs repo)","status":"ok"},
+{"detail":"help center API; unchanged; 0 new","fallback":"","id":"platform:devex-faq","label":"DevEx FAQ (Help Center)","status":"ok"},
+{"detail":"daily message sent","fallback":"","id":"discord","label":"Discord webhook","status":"ok"}
+],
+"highlights":[
+{"kind":"gainer_24h","priority":100,"text":"[**\\[UPD\\] Paint to Get Rich 🎨**](https://www.roblox.com/games/104320321984431) +1,556% players in 24h (482 → 8k) · Simulation","universe_id":10744310825},
+{"kind":"gainer_7d","priority":96,"text":"[**\\[UPD\\] Strideway**](https://www.roblox.com/games/17035967585) +888% players in 7d (463 → 4.6k) · Roleplay & Avatar Sim","universe_id":5841858050},
+{"kind":"breakout","priority":94,"text":"New breakout: [**Throw Food For Animals**](https://www.roblox.com/games/120219252362013) (Simulation, 51 days old) · 238k playing, ~2.4M visits/day","universe_id":10766972131},
+{"kind":"abs_gainer_24h","priority":75,"text":"[**Murder Mystery 2**](https://www.roblox.com/games/142823291) added the most players in 24h: +110k (now 447k)","universe_id":66654135},
+{"kind":"breakout","priority":74,"text":"New breakout: [**DONT SPLASH**](https://www.roblox.com/games/119958473240233) (Obby & Platformer, 22 days old) · 116k playing, ~11.3M visits/day","universe_id":10771421858}
+],
+"history_days":22,
+"history_note":"Growth comparisons unlock as history builds: 30d from Nov 17.",
+"platform":{"counts":{"high":0,"low":0,"medium":0},"featured":[]}
+}
