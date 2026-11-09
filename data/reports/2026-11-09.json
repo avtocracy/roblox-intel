@@ -1,0 +1,38 @@
+{
+"dashboard_url":"https://avtocracy.github.io/roblox-intel/",
+"date":"2026-11-09",
+"developer_moves":[
+{"developer":"Yielding Arts","score":96.7,"text":"Yielding Arts updated [HALLOWEEN] The Strongest Battlegrounds on Nov 2; players fell 41% in a week (73.4k → 43.5k)","type":"update_impact","universe_id":3808081382},
+{"developer":"Sakenva","score":89.3,"text":"PF27  [⚽️] changed owner: Prestige Futbol: Group → Sakenva · 3.8k playing","type":"ownership_change","universe_id":10604930200},
+{"developer":"Nikilis","score":86.7,"text":"Nikilis: players up 36% in a week (362k → 491k across 1 game)","type":"player_surge","universe_id":null},
+{"developer":"BRAZILIAN SPYDER","score":84.3,"text":"BRAZILIAN SPYDER: players down 41% in a week (102k → 60.4k across 1 game)","type":"player_drop","universe_id":null},
+{"developer":"Yielding Arts","score":83.7,"text":"Yielding Arts: players down 41% in a week (73.4k → 43.5k across 2 games)","type":"player_drop","universe_id":null}
+],
+"developer_moves_total":14,
+"generated_at":"2026-11-09T23:26:43+00:00",
+"health":[
+{"detail":"26 developers from 26 entries","fallback":"","id":"developers-config","label":"Tracked developer list (config/developers.yml)","status":"ok"},
+{"detail":"90 games across 26 developers","fallback":"","id":"developer-games","label":"Developer game lists (games.roblox.com v2)","status":"ok"},
+{"detail":"26 sorts, 926 games","fallback":"","id":"charts","label":"Roblox Charts (explore-api)","status":"ok"},
+{"detail":"1621 of 1646 games","fallback":"","id":"games-api","label":"Game stats (games.roblox.com)","status":"ok"},
+{"detail":"1620 games","fallback":"","id":"votes-api","label":"Likes/dislikes (games.roblox.com)","status":"ok"},
+{"detail":"34 new icons","fallback":"","id":"icons-api","label":"Game icons (thumbnails.roblox.com)","status":"ok"},
+{"detail":"3 new","fallback":"","id":"platform:devforum-announcements","label":"DevForum · Announcements","status":"ok"},
+{"detail":"0 new","fallback":"","id":"platform:devforum-release-notes","label":"DevForum · Release Notes","status":"ok"},
+{"detail":"332 articles linked from the newsroom page; 1 new","fallback":"","id":"platform:roblox-newsroom","label":"Roblox Newsroom (official blog)","status":"ok"},
+{"detail":"0 new commits, 0 meaningful changes; 0 new","fallback":"","id":"platform:creator-docs","label":"Creator Docs (official docs repo)","status":"ok"},
+{"detail":"help center API; unchanged; 0 new","fallback":"","id":"platform:devex-faq","label":"DevEx FAQ (Help Center)","status":"ok"},
+{"detail":"4 AI summaries (0 upgraded from earlier keyword summaries), 0 keyword summaries","fallback":"","id":"summarizer","label":"Summaries (local AI on the runner (qwen2.5:3b))","status":"ok"},
+{"detail":"daily message sent","fallback":"","id":"discord","label":"Discord webhook","status":"ok"}
+],
+"highlights":[
+{"kind":"gainer_24h","priority":100,"text":"[**\\[HIT-BOY SEASON🎵🎧 \\] Beat Battle**](https://www.roblox.com/games/75605211243454) +713% players in 24h (135 → 1.1k) · Entertainment","universe_id":9800616505},
+{"kind":"gainer_7d","priority":96,"text":"[**\\[UPDATE 2.0\\] 30 Floors Up**](https://www.roblox.com/games/124063493943486) +759% players in 7d (1.4k → 12.1k) · Survival","universe_id":10772879271},
+{"kind":"breakout","priority":94,"text":"New breakout: [**Throw Food For Animals**](https://www.roblox.com/games/120219252362013) (Simulation, 52 days old) · 138k playing, ~2.7M visits/day","universe_id":10766972131},
+{"kind":"abs_gainer_24h","priority":75,"text":"[**Murder Mystery 2**](https://www.roblox.com/games/142823291) added the most players in 24h: +43.8k (now 491k)","universe_id":66654135},
+{"kind":"breakout","priority":74,"text":"New breakout: [**DONT SPLASH**](https://www.roblox.com/games/119958473240233) (Obby & Platformer, 23 days old) · 59k playing, ~11.4M visits/day","universe_id":10771421858}
+],
+"history_days":23,
+"history_note":"Growth comparisons unlock as history builds: 30d from Nov 17.",
+"platform":{"counts":{"high":0,"low":2,"medium":2},"featured":[]}
+}
