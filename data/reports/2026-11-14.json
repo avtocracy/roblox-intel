@@ -1,0 +1,38 @@
+{
+"dashboard_url":"https://avtocracy.github.io/roblox-intel/",
+"date":"2026-11-14",
+"developer_moves":[
+{"developer":"Fisching","score":97.0,"text":"Fisching updated Fisch 🦈 [HAMMI] on Nov 7; players fell 37% in a week (131k → 82.5k)","type":"update_impact","universe_id":5750914919},
+{"developer":"My Career - Be a Soccer Player!","score":90.3,"text":"[BETA] My Career - Be a Soccer Player! changed owner: patinho1235 → My Career - Be a Soccer Player! · 6.7k playing","type":"ownership_change","universe_id":10770115123},
+{"developer":"Grandma's Favourite Games","score":88.3,"text":"Grandma's Favourite Games: players down 44% in a week (658k → 367k across 3 games)","type":"player_drop","universe_id":null},
+{"developer":"Gamer Robot Inc","score":84.2,"text":"Gamer Robot Inc: players up 27% in a week (324k → 411k across 1 game)","type":"player_surge","universe_id":null},
+{"developer":"LSPLASH","score":79.8,"text":"LSPLASH: players down 27% in a week (43.6k → 31.8k across 3 games)","type":"player_drop","universe_id":null}
+],
+"developer_moves_total":16,
+"generated_at":"2026-11-14T19:11:30+00:00",
+"health":[
+{"detail":"26 developers from 26 entries","fallback":"","id":"developers-config","label":"Tracked developer list (config/developers.yml)","status":"ok"},
+{"detail":"90 games across 26 developers","fallback":"","id":"developer-games","label":"Developer game lists (games.roblox.com v2)","status":"ok"},
+{"detail":"26 sorts, 937 games","fallback":"","id":"charts","label":"Roblox Charts (explore-api)","status":"ok"},
+{"detail":"1744 of 1775 games","fallback":"","id":"games-api","label":"Game stats (games.roblox.com)","status":"ok"},
+{"detail":"1743 games","fallback":"","id":"votes-api","label":"Likes/dislikes (games.roblox.com)","status":"ok"},
+{"detail":"23 new icons","fallback":"","id":"icons-api","label":"Game icons (thumbnails.roblox.com)","status":"ok"},
+{"detail":"2 new","fallback":"","id":"platform:devforum-announcements","label":"DevForum · Announcements","status":"ok"},
+{"detail":"0 new","fallback":"","id":"platform:devforum-release-notes","label":"DevForum · Release Notes","status":"ok"},
+{"detail":"334 articles linked from the newsroom page; 0 new","fallback":"","id":"platform:roblox-newsroom","label":"Roblox Newsroom (official blog)","status":"ok"},
+{"detail":"1 new commits, 1 meaningful changes; 1 new","fallback":"","id":"platform:creator-docs","label":"Creator Docs (official docs repo)","status":"ok"},
+{"detail":"help center API; unchanged; 0 new","fallback":"","id":"platform:devex-faq","label":"DevEx FAQ (Help Center)","status":"ok"},
+{"detail":"3 AI summaries (0 upgraded from earlier keyword summaries), 0 keyword summaries","fallback":"","id":"summarizer","label":"Summaries (local AI on the runner (qwen2.5:3b))","status":"ok"},
+{"detail":"daily message sent","fallback":"","id":"discord","label":"Discord webhook","status":"ok"}
+],
+"highlights":[
+{"kind":"gainer_24h","priority":100,"text":"[**\\[X20\\] +1 Speed Keyboard Escape \\| Candy & Chocolate**](https://www.roblox.com/games/95082159892680) +3,279% players in 24h (22.3k → 752k) · Simulation","universe_id":9584852943},
+{"kind":"gainer_7d","priority":96,"text":"[**\\[UPD\\] Paint to Get Rich 🎨**](https://www.roblox.com/games/104320321984431) +1,637% players in 7d (482 → 8.4k) · Simulation","universe_id":10744310825},
+{"kind":"breakout","priority":94,"text":"New breakout: [**Throw Food For Animals**](https://www.roblox.com/games/120219252362013) (Simulation, 57 days old) · 337k playing, ~4.1M visits/day","universe_id":10766972131},
+{"kind":"genre_up","priority":88,"text":"Genre **RPG** +18% players over 7d (646k → 759k across 95 games)","universe_id":null},
+{"kind":"breakout","priority":74,"text":"New breakout: [**Hyper Realistic Ragdoll**](https://www.roblox.com/games/101277003916102) (Simulation, 16 days old) · 174k playing, ~1.3M visits/day","universe_id":10773618503}
+],
+"history_days":28,
+"history_note":"Growth comparisons unlock as history builds: 30d from Nov 17.",
+"platform":{"counts":{"high":0,"low":0,"medium":3},"featured":[]}
+}
