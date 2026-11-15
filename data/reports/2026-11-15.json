@@ -1,0 +1,37 @@
+{
+"dashboard_url":"https://avtocracy.github.io/roblox-intel/",
+"date":"2026-11-15",
+"developer_moves":[
+{"developer":"Blocks In Sandals","score":90.6,"text":"Paint and Hide! 🎨 changed owner: blocksinsandals → Blocks In Sandals · 7.9k playing","type":"ownership_change","universe_id":10766044605},
+{"developer":"Rumble Studios","score":88.2,"text":"Rumble Studios updated [❄️] Bubble Gum Simulator on Nov 8; players fell 25% in a week (2.6k → 2k)","type":"update_impact","universe_id":892043755},
+{"developer":"Solace Softworks","score":87.8,"text":"FAITHFUL | BETA changed owner: O52k → Solace Softworks · 1.6k playing","type":"ownership_change","universe_id":10769999776},
+{"developer":"Nosniy Games","score":46.0,"text":"Nosniy Games updated [🎯] RIVALS · 180k playing","type":"game_updated","universe_id":6035872082},
+{"developer":"Paradoxum Games","score":42.5,"text":"Paradoxum Games updated Tower Defense Simulator · 23.1k playing","type":"game_updated","universe_id":1176784616}
+],
+"developer_moves_total":6,
+"generated_at":"2026-11-15T19:46:38+00:00",
+"health":[
+{"detail":"26 developers from 26 entries","fallback":"","id":"developers-config","label":"Tracked developer list (config/developers.yml)","status":"ok"},
+{"detail":"90 games across 26 developers","fallback":"","id":"developer-games","label":"Developer game lists (games.roblox.com v2)","status":"ok"},
+{"detail":"26 sorts, 939 games","fallback":"","id":"charts","label":"Roblox Charts (explore-api)","status":"ok"},
+{"detail":"1771 of 1804 games","fallback":"","id":"games-api","label":"Game stats (games.roblox.com)","status":"ok"},
+{"detail":"1770 games","fallback":"","id":"votes-api","label":"Likes/dislikes (games.roblox.com)","status":"ok"},
+{"detail":"29 new icons","fallback":"","id":"icons-api","label":"Game icons (thumbnails.roblox.com)","status":"ok"},
+{"detail":"0 new","fallback":"","id":"platform:devforum-announcements","label":"DevForum · Announcements","status":"ok"},
+{"detail":"0 new","fallback":"","id":"platform:devforum-release-notes","label":"DevForum · Release Notes","status":"ok"},
+{"detail":"334 articles linked from the newsroom page; 0 new","fallback":"","id":"platform:roblox-newsroom","label":"Roblox Newsroom (official blog)","status":"ok"},
+{"detail":"0 new commits, 0 meaningful changes; 0 new","fallback":"","id":"platform:creator-docs","label":"Creator Docs (official docs repo)","status":"ok"},
+{"detail":"help center API; unchanged; 0 new","fallback":"","id":"platform:devex-faq","label":"DevEx FAQ (Help Center)","status":"ok"},
+{"detail":"daily message sent","fallback":"","id":"discord","label":"Discord webhook","status":"ok"}
+],
+"highlights":[
+{"kind":"gainer_24h","priority":100,"text":"[**\\[🍪\\] Catch And Tame!**](https://www.roblox.com/games/96645548064314) +1,181% players in 24h (477 → 6.1k) · Simulation","universe_id":9091133975},
+{"kind":"gainer_7d","priority":96,"text":"[**Weak Legacy 2 \\[HUGE UPD\\]**](https://www.roblox.com/games/18337464872) +1,830% players in 7d (161 → 3.1k) · RPG","universe_id":6216468795},
+{"kind":"breakout","priority":94,"text":"New breakout: [**Throw Food For Animals**](https://www.roblox.com/games/120219252362013) (Simulation, 58 days old) · 305k playing, ~4.6M visits/day","universe_id":10766972131},
+{"kind":"abs_gainer_24h","priority":75,"text":"[**STAND OUT**](https://www.roblox.com/games/128828638194450) added the most players in 24h: +30.9k (now 70.5k)","universe_id":8172250815},
+{"kind":"breakout","priority":74,"text":"New breakout: [**Ragdoll Soccer**](https://www.roblox.com/games/106931373443671) (Sports & Racing, 33 days old) · 84.1k playing, ~711k visits/day","universe_id":10770730129}
+],
+"history_days":29,
+"history_note":"Growth comparisons unlock as history builds: 30d from Nov 17.",
+"platform":{"counts":{"high":0,"low":0,"medium":0},"featured":[]}
+}
