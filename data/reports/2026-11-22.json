@@ -1,0 +1,37 @@
+{
+"dashboard_url":"https://avtocracy.github.io/roblox-intel/",
+"date":"2026-11-22",
+"developer_moves":[
+{"developer":"Nosniy Games","score":95.6,"text":"Nosniy Games updated [🎯] RIVALS on Nov 15; players fell 25% in a week (180k → 135k)","type":"update_impact","universe_id":6035872082},
+{"developer":"Nosniy Games","score":81.8,"text":"Nosniy Games: players down 25% in a week (181k → 135k across 6 games)","type":"player_drop","universe_id":null},
+{"developer":"LSPLASH","score":78.9,"text":"LSPLASH: players down 27% in a week (27.7k → 20.3k across 3 games)","type":"player_drop","universe_id":null},
+{"developer":"Brookhaven by Voldex","score":47.6,"text":"Brookhaven by Voldex updated Brookhaven 🏡RP · 451k playing","type":"game_updated","universe_id":1686885941},
+{"developer":"Rumble Studios","score":40.7,"text":"Rumble Studios updated [🦃] Bubble Gum Simulator INFINITY · 8.5k playing","type":"game_updated","universe_id":6504986360}
+],
+"developer_moves_total":5,
+"generated_at":"2026-11-22T20:44:25+00:00",
+"health":[
+{"detail":"26 developers from 26 entries","fallback":"","id":"developers-config","label":"Tracked developer list (config/developers.yml)","status":"ok"},
+{"detail":"90 games across 26 developers","fallback":"","id":"developer-games","label":"Developer game lists (games.roblox.com v2)","status":"ok"},
+{"detail":"26 sorts, 949 games","fallback":"","id":"charts","label":"Roblox Charts (explore-api)","status":"ok"},
+{"detail":"1819 of 1851 games","fallback":"","id":"games-api","label":"Game stats (games.roblox.com)","status":"ok"},
+{"detail":"1818 games","fallback":"","id":"votes-api","label":"Likes/dislikes (games.roblox.com)","status":"ok"},
+{"detail":"19 new icons","fallback":"","id":"icons-api","label":"Game icons (thumbnails.roblox.com)","status":"ok"},
+{"detail":"0 new","fallback":"","id":"platform:devforum-announcements","label":"DevForum · Announcements","status":"ok"},
+{"detail":"0 new","fallback":"","id":"platform:devforum-release-notes","label":"DevForum · Release Notes","status":"ok"},
+{"detail":"337 articles linked from the newsroom page; 0 new","fallback":"","id":"platform:roblox-newsroom","label":"Roblox Newsroom (official blog)","status":"ok"},
+{"detail":"0 new commits, 0 meaningful changes; 0 new","fallback":"","id":"platform:creator-docs","label":"Creator Docs (official docs repo)","status":"ok"},
+{"detail":"help center API; unchanged; 0 new","fallback":"","id":"platform:devex-faq","label":"DevEx FAQ (Help Center)","status":"ok"},
+{"detail":"daily message sent","fallback":"","id":"discord","label":"Discord webhook","status":"ok"}
+],
+"highlights":[
+{"kind":"gainer_24h","priority":100,"text":"[**\\[BUUKU REWORK\\] Shonen Unleashed**](https://www.roblox.com/games/12297350239) +469% players in 24h (344 → 2k) · Action","universe_id":4330936850},
+{"kind":"gainer_7d","priority":96,"text":"[**\\[War for Paradis Arc\\] Attack on Titan: Freedom War**](https://www.roblox.com/games/11534222714) +1,188% players in 7d (156 → 2k) · Action","universe_id":4096039463},
+{"kind":"breakout","priority":94,"text":"New breakout: [**Hyper Realistic Ragdoll**](https://www.roblox.com/games/101277003916102) (Simulation, 24 days old) · 111k playing, ~2.3M visits/day","universe_id":10773618503},
+{"kind":"gainer_30d","priority":92,"text":"[**Weak Legacy 2 \\[UPDATE\\]**](https://www.roblox.com/games/18337464872) +1,696% players in 30d (214 → 3.8k) · RPG","universe_id":6216468795},
+{"kind":"abs_gainer_24h","priority":75,"text":"[**\\[UPD 1\\] STAND OUT**](https://www.roblox.com/games/128828638194450) added the most players in 24h: +39.7k (now 80.2k)","universe_id":8172250815}
+],
+"history_days":36,
+"history_note":"",
+"platform":{"counts":{"high":0,"low":0,"medium":0},"featured":[]}
+}
